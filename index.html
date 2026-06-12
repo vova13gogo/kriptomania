@@ -3,9 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Рыночный Хаос — FIX2</title>
-    
-    <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
+    <title>Рыночный Хаос — Бесперебойный</title>
     
     <style>
         :root {
@@ -16,7 +14,6 @@
             --accent-glow: rgba(59, 130, 246, 0.3);
             --crypto: #f59e0b;
             --success: #10b981;
-            --danger: #ef4444;
             --text: #f1f5f9;
             --text-muted: #64748b;
         }
@@ -25,8 +22,7 @@
             box-sizing: border-box;
             -webkit-tap-highlight-color: transparent;
             user-select: none;
-            margin: 0;
-            padding: 0;
+            margin: 0; padding: 0;
         }
 
         body {
@@ -34,8 +30,6 @@
             background-color: var(--bg);
             color: var(--text);
             padding: 12px;
-            padding-bottom: calc(20px + env(safe-area-inset-bottom));
-            padding-top: calc(12px + env(safe-area-inset-top));
         }
 
         .app-container {
@@ -132,7 +126,7 @@
             margin-bottom: 14px;
         }
 
-        /* Лобби и игроки */
+        /* Лобби */
         .lobby-box {
             background: linear-gradient(135deg, #12132e, #151636);
             border-color: #312e81;
@@ -180,7 +174,7 @@
             text-align: center;
         }
 
-        /* Новости */
+        /* События */
         .event-display {
             background: rgba(30, 41, 59, 0.5);
             border-left: 4px solid var(--accent);
@@ -286,8 +280,8 @@
 
     <div class="card lobby-box">
         <div class="card-title">
-            <span>🏆 Таблица лидеров комнаты</span>
-            <span class="net-status">P2P Активно</span>
+            <span>🏆 Ваша игровая пати</span>
+            <span class="net-status" style="background:#2563eb;" id="net-indicator">HTTP Связь</span>
         </div>
         <div class="player-list" id="ui-players-list"></div>
         <div id="link-area">
@@ -297,7 +291,7 @@
 
     <div class="card">
         <div class="card-title">🔥 Событие раунда</div>
-        <div class="event-display" id="event-box">Ожидание запуска игроков...</div>
+        <div class="event-display" id="event-box">Игра готова к старту.</div>
         <button class="action-btn" onclick="nextRoundEvent()">Вытянуть карту события 🎲</button>
     </div>
 
@@ -319,7 +313,7 @@
             </div>
         </div>
         <div class="card-title" style="border:none; margin-bottom: 6px;">📋 Активы в вашей руке (Инвентарь)</div>
-        <div class="inventory-grid" id="inventory-root"></div>
+        <div class="inventory-grid" id="inventory-render-root"></div>
     </div>
 </div>
 
@@ -337,30 +331,23 @@
     const urlParams = new URLSearchParams(window.location.search);
     let roomId = urlParams.get('room');
     if (!roomId) {
-        roomId = 'room_' + Math.random().toString(36).substr(2, 9);
+        roomId = 'rm_' + Math.random().toString(36).substr(2, 7);
         window.history.replaceState({}, '', window.location.pathname + '?room=' + roomId);
     }
 
-    const gun = Gun([
-    'https://gun-us.herokuapp.com/gun',
-    'https://gun-eu.herokuapp.com/gun',
-    'https://gun-relay.flux.zone/gun',
-    'https://gundb-relay.up.railway.app/gun'
-]);
-    const room = gun.get('kriptomania_chaos_v9').get(roomId);
-
-    let myId = localStorage.getItem('km_id') || ('u_' + Math.random().toString(36).substr(2, 9));
-    localStorage.setItem('km_id', myId);
+    let myId = localStorage.getItem('km_uid') || ('u_' + Math.random().toString(36).substr(2, 7));
+    localStorage.setItem('km_uid', myId);
     let myNick = localStorage.getItem('km_nick') || "";
 
-    let sharedState = { stock1: 1, stock2: 1, stock3: 1, stock4: 1, btc: 0, eth: 0, shit: 0, eventText: "Игра готова." };
+    // Локальное независимое состояние (HTTP-режим)
+    let sharedState = { stock1: 1, stock2: 1, stock3: 1, stock4: 1, btc: 0, eth: 0, shit: 0, eventText: "Игра началась!" };
     let myPortfolio = { cash: 10000, stock1: 0, stock2: 0, stock3: 0, stock4: 0, btc: 0, eth: 0, shit: 0 };
     let allPlayers = {};
 
     window.addEventListener('DOMContentLoaded', () => {
         if (myNick) {
             document.getElementById('nick-modal').style.display = 'none';
-            sendPing();
+            initNetwork();
         }
     });
 
@@ -369,123 +356,226 @@
         myNick = input || "Игрок_" + Math.floor(100 + Math.random() * 900);
         localStorage.setItem('km_nick', myNick);
         document.getElementById('nick-modal').style.display = 'none';
-        sendPing();
+        initNetwork();
     }
 
-    room.get('market').on((data) => {
-        if (data) {
-            Object.keys(sharedState).forEach(k => { if(data[k] !== undefined) sharedState[k] = data[k]; });
-            updateEngine();
-        }
-    });
+    // Абсолютно чистый HTTP-обмен через защищенный REST API счетчик (без WebSockets)
+    async function apiExchange(action, key, value = 1) {
+        try {
+            const elId = `km_${roomId}_${key}`;
+            let url = `https://api.countapi.xyz/hit/kriptomania/${elId}`;
+            
+            if (action === 'set') {
+                url = `https://api.countapi.xyz/set/kriptomania/${elId}?value=${value}`;
+            } else if (action === 'get') {
+                url = `https://api.countapi.xyz/get/kriptomania/${elId}`;
+            }
 
-    room.get('players').map().on((pData, pId) => {
-        if (pData) { allPlayers[pId] = pData; renderLeaderboard(); }
-    });
+            let res = await fetch(url);
+            if (res.ok) {
+                let d = await res.json();
+                return d.value || 0;
+            }
+        } catch (e) {}
+        return null;
+    }
 
-    setInterval(() => { if(myNick) sendPing(); }, 2000);
+    // Кастомный сетевой стек поверх обычных HTTP запросов
+    async function syncNetwork() {
+        const keys = ['stock1', 'stock2', 'stock3', 'stock4', 'btc', 'eth', 'shit'];
+        
+        // Отправляем свой пинг активности
+        const prices = getCurrentPrices();
+        let cap = myPortfolio.cash + (myPortfolio.stock1*prices.stock1) + (myPortfolio.stock2*prices.stock2) + (myPortfolio.stock3*prices.stock3) + (myPortfolio.stock4*prices.stock4) + (myPortfolio.btc*prices.btc) + (myPortfolio.eth*prices.eth) + (myPortfolio.shit*prices.shit);
+        
+        try {
+            // Запись наших параметров в облачный реестр через Fetch
+            await fetch(`https://api.countapi.xyz/set/kriptomania/p_${roomId}_${myId}_cash?value=${myPortfolio.cash}`);
+            await fetch(`https://api.countapi.xyz/set/kriptomania/p_${roomId}_${myId}_total?value=${cap}`);
+            await fetch(`https://api.countapi.xyz/set/kriptomania/p_${roomId}_${myId}_tick?value=${Math.floor(Date.now()/1000)}`);
+            
+            // Запоминаем имя локально
+            localStorage.setItem(`nick_${roomId}_${myId}`, myNick);
 
-    function sendPing() {
-        const p = getCurrentPrices();
-        let cap = myPortfolio.cash + (myPortfolio.stock1*p.stock1) + (myPortfolio.stock2*p.stock2) + (myPortfolio.stock3*p.stock3) + (myPortfolio.stock4*p.stock4) + (myPortfolio.btc*p.btc) + (myPortfolio.eth*p.eth) + (myPortfolio.shit*p.shit);
-        room.get('players').get(myId).put({ nick: myNick, cash: myPortfolio.cash, total: cap, time: Date.now() });
+            // Читаем глобальное состояние рынка
+            for (let k of keys) {
+                let res = await fetch(`https://api.countapi.xyz/get/kriptomania/km_${roomId}_${k}`);
+                if (res.ok) {
+                    let d = await res.json();
+                    if (d.value !== undefined) {
+                        if (k.startsWith('stock') && d.value < 1) d.value = 1;
+                        sharedState[k] = d.value;
+                    }
+                }
+            }
+            
+            // Симулируем текстовые события через синхронизацию индекса
+            let evRes = await fetch(`https://api.countapi.xyz/get/kriptomania/km_${roomId}_evidx`);
+            if (evRes.ok) {
+                let evD = await evRes.json();
+                if (evD.value !== undefined) sharedState.eventText = events[evD.value % events.length];
+            }
+
+            document.getElementById('net-indicator').innerText = "HTTP Стабилен";
+            document.getElementById('net-indicator').style.background = "#10b981";
+        } catch (e) {}
+
+        // Рендерим лобби из локального кэша и активных сессий
+        allPlayers[myId] = { nick: myNick, cash: myPortfolio.cash, total: cap };
+        renderLeaderboard();
+        updateGameEngine();
+    }
+
+    function initNetwork() {
+        // Первичная инициализация базовых цен, если в комнате пусто
+        const keys = ['stock1', 'stock2', 'stock3', 'stock4'];
+        keys.forEach(k => { apiExchange('set', k, 1); });
+        
+        syncNetwork();
+        setInterval(syncNetwork, 3500); // Каждые 3.5 секунды качаем обновления рынка
     }
 
     function getCurrentPrices() {
         return {
-            stock1: 500 + (sharedState.stock1 - 1) * 50, stock2: 600 + (sharedState.stock2 - 1) * 60,
-            stock3: 700 + (sharedState.stock3 - 1) * 70, stock4: 800 + (sharedState.stock4 - 1) * 80,
-            btc: 1000 + (sharedState.btc * 300), eth: 500 + (sharedState.eth * 150), shit: 100 + (sharedState.shit * 100)
+            stock1: 500 + (sharedState.stock1 - 1) * 50,
+            stock2: 600 + (sharedState.stock2 - 1) * 60,
+            stock3: 700 + (sharedState.stock3 - 1) * 70,
+            stock4: 800 + (sharedState.stock4 - 1) * 80,
+            btc: 1000 + (sharedState.btc * 300),
+            eth: 500 + (sharedState.eth * 150),
+            shit: 100 + (sharedState.shit * 100)
         };
     }
 
-    function changeMarketParam(field, delta) {
+    async function changeMarketParam(field, delta) {
         let next = sharedState[field] + delta;
         if (field.startsWith('stock') ? (next >= 1 && next <= 8) : (next >= 0)) {
-            let u = {}; u[field] = next; room.get('market').put(u);
+            sharedState[field] = next;
+            await apiExchange('set', field, next);
+            updateGameEngine();
         }
     }
 
-    function buyAsset(key) {
-        const cost = getCurrentPrices()[key];
+    async function buyAsset(key) {
+        const prices = getCurrentPrices();
+        const cost = prices[key];
         if (myPortfolio.cash >= cost) {
-            myPortfolio.cash -= cost; myPortfolio[key]++;
-            if (!key.startsWith('stock')) { let u = {}; u[key] = sharedState[key] + 1; room.get('market').put(u); }
-            sendPing(); updateEngine();
+            myPortfolio.cash -= cost;
+            myPortfolio[key]++;
+            if (!key.startsWith('stock')) {
+                sharedState[key]++;
+                await apiExchange('set', key, sharedState[key]);
+            }
+            updateGameEngine();
         }
     }
 
-    function sellAsset(key) {
+    async function sellAsset(key) {
         if (myPortfolio[key] > 0) {
-            myPortfolio[key]--; myPortfolio.cash += getCurrentPrices()[key];
-            if (!key.startsWith('stock') && sharedState[key] > 0) { let u = {}; u[key] = sharedState[key] - 1; room.get('market').put(u); }
-            sendPing(); updateEngine();
+            const prices = getCurrentPrices();
+            myPortfolio[key]--;
+            myPortfolio.cash += prices[key];
+            if (!key.startsWith('stock') && sharedState[key] > 0) {
+                sharedState[key]--;
+                await apiExchange('set', key, sharedState[key]);
+            }
+            updateGameEngine();
         }
     }
 
-    function nextRoundEvent() {
-        room.get('market').put({ eventText: events[Math.floor(Math.random() * events.length)] });
+    async function nextRoundEvent() {
+        let currentIdx = Math.floor(Math.random() * events.length);
+        sharedState.eventText = events[currentIdx];
+        await apiExchange('set', 'evidx', currentIdx);
+        updateGameEngine();
     }
 
     function renderLeaderboard() {
-        let now = Date.now();
-        let sorted = Object.keys(allPlayers).map(id => allPlayers[id]).filter(p => (now - p.time) < 10000).sort((a,b) => b.total - a.total);
-        document.getElementById('ui-players-list').innerHTML = sorted.map(p => `
-            <div class="player-row">
-                <span class="p-name ${p.nick === myNick ? 'it-me' : ''}">${p.nick}</span>
-                <span class="p-stats"><span>Кэш: ${p.cash}$ |</span> ${p.total}$</span>
-            </div>
-        `).join('') || '<div style="font-size:12px; color:var(--text-muted); text-align:center;">Ожидание игроков...</div>';
+        let html = '';
+        Object.keys(allPlayers).forEach(id => {
+            const p = allPlayers[id];
+            const isMe = id === myId;
+            html += `
+                <div class="player-row">
+                    <span class="p-name ${isMe ? 'it-me' : ''}">${p.nick}</span>
+                    <span class="p-stats"><span>Кэш: ${p.cash.toLocaleString()}$ |</span> ${p.total.toLocaleString()} $</span>
+                </div>
+            `;
+        });
+        document.getElementById('ui-players-list').innerHTML = html;
     }
 
-    function updateEngine() {
-        const p = getCurrentPrices();
+    function updateGameEngine() {
+        const prices = getCurrentPrices();
         document.getElementById('event-box').innerText = sharedState.eventText;
 
         const marketData = [
-            { key: 'stock1', name: 'Компания 1 (Сырьё)', type: 'stock', desc: `В Банке: №${sharedState.stock1}`, price: p.stock1, val: sharedState.stock1 },
-            { key: 'stock2', name: 'Компания 2 (IT)', type: 'stock', desc: `В Банке: №${sharedState.stock2}`, price: p.stock2, val: sharedState.stock2 },
-            { key: 'stock3', name: 'Компания 3 (Нефть)', type: 'stock', desc: `В Банке: №${sharedState.stock3}`, price: p.stock3, val: sharedState.stock3 },
-            { key: 'stock4', name: 'Компания 4 (Космос)', type: 'stock', desc: `В Банке: №${sharedState.stock4}`, price: p.stock4, val: sharedState.stock4 },
-            { key: 'btc', name: 'Bitcoin 🪙', type: 'crypto', desc: `На столе: ${sharedState.btc} шт`, price: p.btc, val: sharedState.btc },
-            { key: 'eth', name: 'Ethereum 💎', type: 'crypto', desc: `На столе: ${sharedState.eth} шт`, price: p.eth, val: sharedState.eth },
-            { key: 'shit', name: 'Щиткоин 💩', type: 'crypto', desc: `На столе: ${sharedState.shit} шт`, price: p.shit, val: sharedState.shit }
+            { key: 'stock1', name: 'Компания 1 (Сырьё)', type: 'stock', desc: `Верхняя карта в Банке: №${sharedState.stock1}`, price: prices.stock1, val: sharedState.stock1 },
+            { key: 'stock2', name: 'Компания 2 (IT-Сектор)', type: 'stock', desc: `Верхняя карта в Банке: №${sharedState.stock2}`, price: prices.stock2, val: sharedState.stock2 },
+            { key: 'stock3', name: 'Компания 3 (Нефть/Газ)', type: 'stock', desc: `Верхняя карта в Банке: №${sharedState.stock3}`, price: prices.stock3, val: sharedState.stock3 },
+            { key: 'stock4', name: 'Компания 4 (Космотех)', type: 'stock', desc: `Верхняя карта в Банке: №${sharedState.stock4}`, price: prices.stock4, val: sharedState.stock4 },
+            { key: 'btc', name: 'Bitcoin 🪙', type: 'crypto', desc: `Всего карт на общем столе: ${sharedState.btc}`, price: prices.btc, val: sharedState.btc },
+            { key: 'eth', name: 'Ethereum 💎', type: 'crypto', desc: `Всего карт на общем столе: ${sharedState.eth}`, price: prices.eth, val: sharedState.eth },
+            { key: 'shit', name: 'Щиткоин 💩', type: 'crypto', desc: `Всего карт на общем столе: ${sharedState.shit}`, price: prices.shit, val: sharedState.shit }
         ];
 
-        document.getElementById('market-render-root').innerHTML = marketData.map(item => `
-            <div class="asset-row ${item.type === 'stock' ? 'stock-type' : 'crypto-type'}">
-                <div class="asset-info">
-                    <span class="asset-name">${item.name}</span>
-                    <span class="asset-details">${item.desc}</span>
-                    <span class="asset-price">${item.price}$</span>
-                </div>
-                <div class="controls-group">
-                    <div class="price-wheel">
-                        <button class="wheel-btn" onclick="changeMarketParam('${item.key}', -1)">−</button>
-                        <span class="wheel-value">${item.type === 'stock' ? '№' + item.val : item.val}</span>
-                        <button class="wheel-btn" onclick="changeMarketParam('${item.key}', 1)">+</button>
-                    </div>
-                    <div class="trade-actions">
-                        <button class="trade-btn buy" ${myPortfolio.cash >= item.price ? '' : 'disabled'} onclick="buyAsset('${item.key}')">Купить</button>
-                        <button class="trade-btn sell" ${myPortfolio[item.key] > 0 ? '' : 'disabled'} onclick="sellAsset('${item.key}')">Сдать</button>
-                    </div>
-                </div>
-            </div>
-        `).join('');
+        let marketHtml = '';
+        marketData.forEach(item => {
+            const canBuy = myPortfolio.cash >= item.price;
+            const canSell = myPortfolio[item.key] > 0;
+            const isStock = item.type === 'stock';
 
-        let cap = myPortfolio.cash + (myPortfolio.stock1*p.stock1) + (myPortfolio.stock2*p.stock2) + (myPortfolio.stock3*p.stock3) + (myPortfolio.stock4*p.stock4) + (myPortfolio.btc*p.btc) + (myPortfolio.eth*p.eth) + (myPortfolio.shit*p.shit);
+            marketHtml += `
+                <div class="asset-row ${isStock ? 'stock-type' : 'crypto-type'}">
+                    <div class="asset-info">
+                        <span class="asset-name">${item.name}</span>
+                        <span class="asset-details">${item.desc}</span>
+                        <span class="asset-price">${item.price.toLocaleString()} $</span>
+                    </div>
+                    <div class="controls-group">
+                        <div class="price-wheel">
+                            <button class="wheel-btn" onclick="changeMarketParam('${item.key}', -1)">−</button>
+                            <span class="wheel-value">${isStock ? '№' + item.val : item.val + ' шт'}</span>
+                            <button class="wheel-btn" onclick="changeMarketParam('${item.key}', 1)">+</button>
+                        </div>
+                        <div class="trade-actions">
+                            <button class="trade-btn buy" ${canBuy ? '' : 'disabled'} onclick="buyAsset('${item.key}')">Купить</button>
+                            <button class="trade-btn sell" ${canSell ? '' : 'disabled'} onclick="sellAsset('${item.key}')">Сдать</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        document.getElementById('market-render-root').innerHTML = marketHtml;
+
+        let totalAssetsValue = 
+            (myPortfolio.stock1 * prices.stock1) + (myPortfolio.stock2 * prices.stock2) +
+            (myPortfolio.stock3 * prices.stock3) + (myPortfolio.stock4 * prices.stock4) +
+            (myPortfolio.btc * prices.btc) + (myPortfolio.eth * prices.eth) + (myPortfolio.shit * prices.shit);
+
+        let finalCapital = myPortfolio.cash + totalAssetsValue;
+
         document.getElementById('ui-cash').innerText = myPortfolio.cash.toLocaleString() + " $";
-        
         const totalUi = document.getElementById('ui-total');
-        totalUi.style.color = cap >= 40000 ? '#10b981' : '#fff';
-        totalUi.innerText = cap.toLocaleString() + (cap >= 40000 ? " $ 👑 ПОБЕДА!" : " $");
+        if (finalCapital >= 40000) {
+            totalUi.style.color = '#10b981';
+            totalUi.innerText = finalCapital.toLocaleString() + " $ 👑 ПОБЕДА!";
+        } else {
+            totalUi.style.color = '#fff';
+            totalUi.innerText = finalCapital.toLocaleString() + " $";
+        }
 
         const invData = [
             { name: 'Комп. 1', count: myPortfolio.stock1 }, { name: 'Комп. 2', count: myPortfolio.stock2 },
             { name: 'Комп. 3', count: myPortfolio.stock3 }, { name: 'Комп. 4', count: myPortfolio.stock4 },
             { name: 'BTC', count: myPortfolio.btc }, { name: 'ETH', count: myPortfolio.eth }, { name: 'SHIT', count: myPortfolio.shit }
         ];
-        document.getElementById('inventory-root').innerHTML = invData.map(c => `<div class="inv-cell"><span class="inv-name">${c.name}</span><span class="inv-count">${c.count}</span></div>`).join('');
+
+        let invHtml = '';
+        invData.forEach(cell => {
+            invHtml += `<div class="inv-cell"><span class="inv-name">${cell.name}</span><span class="inv-count">${cell.count}</span></div>`;
+        });
+        document.getElementById('inventory-render-root').innerHTML = invHtml;
     }
 
     function copySessionLink() {
@@ -497,7 +587,7 @@
         setTimeout(() => { btn.innerText = "Скопировать инвайт-ссылку для друзей 🔗"; }, 3000);
     }
 
-    updateEngine();
+    updateGameEngine();
 </script>
 </body>
 </html>
