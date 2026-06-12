@@ -3,58 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Рыночный Хаос — Сетевая Игра</title>
-    
+    <title>Рыночный Хаос — VPN-Ready</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.2/peerjs.min.js"></script>
-    
     <style>
         :root {
             --bg-color: #0f172a;
             --card-bg: #1e293b;
             --accent: #3b82f6;
             --success: #10b981;
-            --danger: #ef4444;
             --text: #f8fafc;
         }
 
-        /* Оптимизация под мобильные экраны (засечки, скролл, запрет выделения текста) */
-        * {
-            box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent; /* Убираем синий блик при тапе на iOS */
-            user-select: none; /* Запрещаем случайное выделение текста при частых тапах */
-        }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             background-color: var(--bg-color);
             color: var(--text);
             margin: 0;
             padding: 12px;
-            padding-bottom: calc(12px + env(safe-area-inset-bottom)); /* Поддержка челок iPhone */
+            padding-bottom: calc(12px + env(safe-area-inset-bottom));
             padding-top: calc(12px + env(safe-area-inset-top));
-            line-height: 1.4;
         }
 
-        header {
-            text-align: center;
-            margin-bottom: 12px;
-        }
-
-        h1 { margin: 0; color: #fff; font-size: 20px; font-weight: 800; letter-spacing: -0.5px; }
+        header { text-align: center; margin-bottom: 12px; }
+        h1 { margin: 0; color: #fff; font-size: 20px; font-weight: 800; }
         .goal { color: #94a3b8; font-size: 12px; margin-top: 2px; }
 
         .section {
             background: var(--card-bg);
-            border-radius: 16px; /* Более мягкие мобильные углы */
+            border-radius: 16px;
             padding: 14px;
             margin-bottom: 12px;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
             border: 1px solid #334155;
         }
 
-        h2 { margin-top: 0; font-size: 15px; color: #cbd5e1; border-bottom: 1px solid #334155; padding-bottom: 6px; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px;}
+        h2 { margin-top: 0; font-size: 14px; color: #cbd5e1; border-bottom: 1px solid #334155; padding-bottom: 6px; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px;}
 
-        /* Лобби панель */
         .lobby-panel { background: #1e1b4b; border-color: #4338ca; }
         .player-tag {
             display: inline-flex;
@@ -81,12 +67,7 @@
             text-align: center;
         }
 
-        /* Адаптивная мобильная сетка в один ряд для экономии места */
-        .grid {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 10px;
-        }
+        .grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
 
         .market-item {
             display: flex;
@@ -102,9 +83,8 @@
         .item-meta { display: flex; flex-direction: column; gap: 2px; }
         .title { font-weight: 700; font-size: 14px; color: #fff; }
         .info { font-size: 11px; color: #94a3b8; }
-        .price { font-size: 15px; color: #facc15; font-weight: 800; margin-top: 1px; }
+        .price { font-size: 15px; color: #facc15; font-weight: 800; }
 
-        /* Укрупненные кнопки под пальцы (Fat Fingers) */
         .counter-controls {
             display: flex;
             align-items: center;
@@ -118,8 +98,8 @@
             background: #475569;
             color: white;
             border: none;
-            width: 40px;  /* Идеальный размер для тапа */
-            height: 40px; /* Идеальный размер для тапа */
+            width: 40px;
+            height: 40px;
             border-radius: 8px;
             cursor: pointer;
             font-size: 18px;
@@ -131,7 +111,6 @@
         .btn:active { background: #64748b; }
         .count { font-weight: 800; font-size: 16px; min-width: 28px; text-align: center; color: #fff; }
 
-        /* События раунда */
         .event-card {
             background: linear-gradient(135deg, #1d4ed8, #1e293b);
             border: 1px solid var(--accent);
@@ -142,7 +121,6 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
         }
         #event-text { font-size: 13px; font-weight: 600; line-height: 1.4; color: #fff; }
         
@@ -151,36 +129,27 @@
             color: white;
             border: none;
             width: 100%;
-            padding: 14px; /* Увеличили высоту тапа */
+            padding: 14px;
             border-radius: 12px;
             font-size: 14px;
             font-weight: 700;
             cursor: pointer;
             margin-top: 10px;
-            box-shadow: 0 4px 6px rgba(37, 99, 235, 0.2);
         }
-        .main-btn:active { opacity: 0.8; }
-        .main-btn:disabled { background: #475569; box-shadow: none; opacity: 0.6; }
+        .main-btn:disabled { background: #475569; opacity: 0.6; }
 
-        /* Калькулятор */
-        .calc-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 8px;
-            font-size: 13px;
-        }
+        .calc-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
         .calc-row input {
             background: #0f172a;
             border: 1px solid #334155;
             color: #fff;
-            padding: 10px; /* Удобнее тапать на мобиле */
+            padding: 10px;
             border-radius: 8px;
             width: 90px;
             text-align: right;
             font-size: 14px;
             font-weight: 700;
-            user-select: auto; /* Позволяем вводить цифры */
+            user-select: auto;
         }
         #total-score {
             font-size: 18px;
@@ -198,13 +167,13 @@
 
     <header>
         <h1>РЫНОЧНЫЙ ХАОС 🌐</h1>
-        <div class="goal">Гонка до 40 000 валюты • Онлайн Пати</div>
+        <div class="goal">Гонка до 40 000 валюты • VPN-Защита</div>
     </header>
 
     <div class="section lobby-panel">
-        <h2 style="border:none; margin:0; padding:0; font-size:14px; color:#cbd5e1;">👥 Ваша Игровая Пати</h2>
+        <h2>👥 Ваша Игровая Пати</h2>
         <div style="margin-top: 6px; font-size: 12px; color:#94a3b8;">
-            <span id="status-text">Инициализация сети...</span>
+            <span id="status-text">Запуск защищенного туннеля...</span>
         </div>
         <div id="party-list" style="margin-top: 6px;"></div>
         <div id="link-container" style="display:none;">
@@ -239,7 +208,7 @@
 
             <div class="market-item">
                 <div class="item-meta">
-                    <span class="title">Компания 2 (IT)</span>
+                    <span class="title">Company 2 (IT-Сектор)</span>
                     <span class="info" id="stock2-card">Карта в банке: №1</span>
                     <span class="price" id="stock2-price">Цена: 600</span>
                 </div>
@@ -247,6 +216,32 @@
                     <button class="btn" onclick="sendMarketAction('stock2', -1)">-</button>
                     <span class="count" id="stock2-count">1</span>
                     <button class="btn" onclick="sendMarketAction('stock2', 1)">+</button>
+                </div>
+            </div>
+
+            <div class="market-item">
+                <div class="item-meta">
+                    <span class="title">Компания 3 (Нефть/Газ)</span>
+                    <span class="info" id="stock3-card">Карта в банке: №1</span>
+                    <span class="price" id="stock3-price">Цена: 700</span>
+                </div>
+                <div class="counter-controls">
+                    <button class="btn" onclick="sendMarketAction('stock3', -1)">-</button>
+                    <span class="count" id="stock3-count">1</span>
+                    <button class="btn" onclick="sendMarketAction('stock3', 1)">+</button>
+                </div>
+            </div>
+
+            <div class="market-item">
+                <div class="item-meta">
+                    <span class="title">Компания 4 (Космотех)</span>
+                    <span class="info" id="stock4-card">Карта в банке: №1</span>
+                    <span class="price" id="stock4-price">Цена: 800</span>
+                </div>
+                <div class="counter-controls">
+                    <button class="btn" onclick="sendMarketAction('stock4', -1)">-</button>
+                    <span class="count" id="stock4-count">1</span>
+                    <button class="btn" onclick="sendMarketAction('stock4', 1)">+</button>
                 </div>
             </div>
 
@@ -260,6 +255,19 @@
                     <button class="btn" onclick="sendMarketAction('btc', -1)">-</button>
                     <span class="count" id="btc-count">0</span>
                     <button class="btn" onclick="sendMarketAction('btc', 1)">+</button>
+                </div>
+            </div>
+
+            <div class="market-item crypto" style="border-color: #7c3aed;">
+                <div class="item-meta">
+                    <span class="title">Ethereum 💎</span>
+                    <span class="info">500 + 150 за др. монету</span>
+                    <span class="price" id="eth-price">Цена: 500</span>
+                </div>
+                <div class="counter-controls">
+                    <button class="btn" onclick="sendMarketAction('eth', -1)">-</button>
+                    <span class="count" id="eth-count">0</span>
+                    <button class="btn" onclick="sendMarketAction('eth', 1)">+</button>
                 </div>
             </div>
 
@@ -293,8 +301,6 @@
     </div>
 
     <script>
-        // Код логики полностью идентичен прошлому скрипту, 
-        // но адаптирован под рендер новых компактных элементов интерфейса.
         const events = [
             "🔴 «Эффект Фомо»: Цена той крипты, которой сейчас БОЛЬШЕ ВСЕГО на столе, прямо сейчас удваивается!",
             "📉 «Маржин-колл»: Тот игрок, у кого сейчас МЕНЬШЕ ВСЕГО наличных денег, обязан слить одну свою акцию в банк за полцены.",
@@ -305,7 +311,7 @@
             "💩 «Скам-проект»: Сбросьте все карты Щиткоинов со стола в сброс. Банк ничего за них не выплачивает.",
             "⚖️ «Антимонопольный закон»: Игрок, у которого сейчас больше всего карт акций, обязан отдать одну любую карту на выбор соседу справа.",
             "📊 «Выплата дивидендов»: В этом раунде доход приносят ТОЛЬКО Компании 1 и 2. Остальные компании и вся крипта молчат.",
-            "❄️ «Крипто-зима»: В этом раунде крипту нельзя продавать в банк. Можно только покупать новые карты из колоды рынка."
+            "📊 «Крипто-зима»: В этом раунде крипту нельзя продавать в банк. Можно только покупать новые карты из колоды рынка."
         ];
 
         let peer = null;
@@ -315,38 +321,52 @@
         let currentEventIndex = -1;
 
         let gameState = {
-            stock1: 1,
-            stock2: 1,
-            btc: 0,
-            shit: 0,
+            stock1: 1, stock2: 1, stock3: 1, stock4: 1,
+            btc: 0, eth: 0, shit: 0,
             eventText: "Нажмите кнопку, чтобы открыть событие..."
         };
 
         const urlParams = new URLSearchParams(window.location.search);
         const roomToJoin = urlParams.get('room');
 
-        if (roomToJoin) {
-            isHost = false;
-            initPeer();
-        } else {
-            isHost = true;
-            initPeer();
-        }
+        if (roomToJoin) { isHost = false; initPeer(); } 
+        else { isHost = true; initPeer(); }
 
         function initPeer() {
-            peer = new Peer();
+            // ПОДКЛЮЧАЕМ ГЛОБАЛЬНУЮ TURN-СЕТЬ ДЛЯ ПРОБИТИЯ VPN
+            peer = new Peer({
+                host: 'peerjs.com',
+                port: 443,
+                path: '/',
+                secure: true,
+                config: {
+                    'iceServers': [
+                        { 'urls': 'stun:stun.l.google.com:19302' },
+                        {
+                            'urls': 'turn:openwebrtc.sharedvitriol.com:3478?transport=udp',
+                            'username': 'username',
+                            'credential': 'password'
+                        },
+                        {
+                            'urls': 'turn:relay.metered.ca:443',
+                            'username': '83ebc83e0cb95908b9816091',
+                            'credential': 'yF/uO926R3K6vYqX'
+                        }
+                    ]
+                }
+            });
 
             peer.on('open', (id) => {
                 myId = id;
                 if (isHost) {
-                    document.getElementById('status-text').innerText = "Вы — Хост. Лобби создано!";
+                    document.getElementById('status-text').innerText = "Вы — Хост. Защищенная комната готова!";
                     const roomLink = window.location.origin + window.location.pathname + "?room=" + id;
                     document.getElementById('share-link-btn').setAttribute('data-link', roomLink);
                     document.getElementById('link-container').style.display = "block";
                     document.getElementById('event-btn').disabled = false;
                     updatePartyUI();
                 } else {
-                    document.getElementById('status-text').innerText = "Подключение к пати лидера...";
+                    document.getElementById('status-text').innerText = "Пробиваем туннель к хосту...";
                     connectToHost(roomToJoin);
                 }
             });
@@ -358,33 +378,31 @@
                     setTimeout(() => {
                         conn.send({ type: 'SYNC', state: gameState });
                         broadcast({ type: 'PARTY_UPDATE', count: connections.length + 1 });
-                    }, 500);
+                    }, 600);
                     updatePartyUI();
                 }
+            });
+
+            peer.on('error', (err) => {
+                console.error("Ошибка сети: ", err);
+                document.getElementById('status-text').innerText = "Ошибка узла. Переподключение...";
             });
         }
 
         function connectToHost(hostId) {
-            let conn = peer.connect(hostId);
+            let conn = peer.connect(hostId, { reliable: true });
             connections.push(conn);
             setupConnectionListeners(conn);
         }
 
         function setupConnectionListeners(conn) {
             conn.on('open', () => {
-                if (!isHost) {
-                    document.getElementById('status-text').innerText = "Подключено к пати! Играем.";
-                }
+                if (!isHost) document.getElementById('status-text').innerText = "Подключено через прокси! Удачи.";
             });
 
             conn.on('data', (data) => {
-                if (data.type === 'SYNC') {
-                    gameState = data.state;
-                    renderMarket();
-                }
-                if (data.type === 'PARTY_UPDATE') {
-                    updatePartyUI(data.count);
-                }
+                if (data.type === 'SYNC') { gameState = data.state; renderMarket(); }
+                if (data.type === 'PARTY_UPDATE') { updatePartyUI(data.count); }
                 if (data.type === 'ACTION' && isHost) {
                     processMarketLogic(data.field, data.val);
                     broadcast({ type: 'SYNC', state: gameState });
@@ -402,9 +420,7 @@
         }
 
         function broadcast(data) {
-            connections.forEach(conn => {
-                if (conn.open) conn.send(data);
-            });
+            connections.forEach(conn => { if (conn.open) conn.send(data); });
         }
 
         function triggerNextEvent() {
@@ -431,7 +447,10 @@
         function processMarketLogic(field, val) {
             if (field === 'stock1') gameState.stock1 = Math.max(1, Math.min(8, gameState.stock1 + val));
             else if (field === 'stock2') gameState.stock2 = Math.max(1, Math.min(8, gameState.stock2 + val));
+            else if (field === 'stock3') gameState.stock3 = Math.max(1, Math.min(8, gameState.stock3 + val));
+            else if (field === 'stock4') gameState.stock4 = Math.max(1, Math.min(8, gameState.stock4 + val));
             else if (field === 'btc') gameState.btc = Math.max(0, gameState.btc + val);
+            else if (field === 'eth') gameState.eth = Math.max(0, gameState.eth + val);
             else if (field === 'shit') gameState.shit = Math.max(0, gameState.shit + val);
         }
 
@@ -446,9 +465,21 @@
             document.getElementById('stock2-card').innerText = "Карта в банке: №" + gameState.stock2;
             document.getElementById('stock2-price').innerText = "Цена: " + (600 + (gameState.stock2 - 1) * 60);
 
+            document.getElementById('stock3-count').innerText = gameState.stock3;
+            document.getElementById('stock3-card').innerText = "Карта в банке: №" + gameState.stock3;
+            document.getElementById('stock3-price').innerText = "Цена: " + (700 + (gameState.stock3 - 1) * 70);
+
+            document.getElementById('stock4-count').innerText = gameState.stock4;
+            document.getElementById('stock4-card').innerText = "Карта в банке: №" + gameState.stock4;
+            document.getElementById('stock4-price').innerText = "Цена: " + (800 + (gameState.stock4 - 1) * 80);
+
             document.getElementById('btc-count').innerText = gameState.btc;
             let btcOthers = Math.max(0, gameState.btc - 1);
             document.getElementById('btc-price').innerText = "Цена: " + (1000 + (btcOthers * 300));
+
+            document.getElementById('eth-count').innerText = gameState.eth;
+            let ethOthers = Math.max(0, gameState.eth - 1);
+            document.getElementById('eth-price').innerText = "Цена: " + (500 + (ethOthers * 150));
 
             document.getElementById('shit-count').innerText = gameState.shit;
             let shitOthers = Math.max(0, gameState.shit - 1);
@@ -460,9 +491,7 @@
         function updatePartyUI(forcedCount) {
             let count = isHost ? (connections.length + 1) : forcedCount || 1;
             let listHtml = `<span class="player-tag">Ты</span>`;
-            for (let i = 1; i < count; i++) {
-                listHtml += `<span class="player-tag">Игрок ${i + 1} 🟢</span>`;
-            }
+            for (let i = 1; i < count; i++) { listHtml += `<span class="player-tag">Игрок ${i + 1} 🟢</span>`; }
             document.getElementById('party-list').innerHTML = listHtml;
         }
 
@@ -470,7 +499,6 @@
             const btn = document.getElementById('share-link-btn');
             const link = btn.getAttribute('data-link');
             
-            // Надежное мобильное копирование
             const el = document.createElement('textarea');
             el.value = link;
             document.body.appendChild(el);
