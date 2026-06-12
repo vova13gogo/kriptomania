@@ -3,453 +3,606 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Рыночный Хаос — GunDB Edition</title>
+    <title>Рыночный Хаос — Полный Симулятор</title>
     
     <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
     
     <style>
         :root {
-            --bg-color: #0f172a;
-            --card-bg: #1e293b;
+            --bg: #0b0f19;
+            --panel: #151f32;
+            --panel-border: #243552;
             --accent: #3b82f6;
+            --accent-glow: rgba(59, 130, 246, 0.3);
+            --crypto: #f59e0b;
+            --crypto-glow: rgba(245, 158, 11, 0.2);
             --success: #10b981;
-            --text: #f8fafc;
+            --danger: #ef4444;
+            --text: #f1f5f9;
+            --text-muted: #64748b;
         }
 
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+            margin: 0;
+            padding: 0;
+        }
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background-color: var(--bg-color);
+            background-color: var(--bg);
             color: var(--text);
-            margin: 0;
             padding: 12px;
-            padding-bottom: calc(12px + env(safe-area-inset-bottom));
+            padding-bottom: calc(20px + env(safe-area-inset-bottom));
             padding-top: calc(12px + env(safe-area-inset-top));
         }
 
-        header { text-align: center; margin-bottom: 12px; }
-        h1 { margin: 0; color: #fff; font-size: 20px; font-weight: 800; }
-        .goal { color: #94a3b8; font-size: 12px; margin-top: 2px; }
+        .app-container {
+            max-width: 550px;
+            margin: 0 auto;
+        }
 
-        .section {
-            background: var(--card-bg);
+        /* Шапка игры */
+        header {
+            text-align: center;
+            margin-bottom: 16px;
+            padding: 10px 0;
+        }
+        header h1 {
+            font-size: 24px;
+            font-weight: 900;
+            letter-spacing: -0.5px;
+            background: linear-gradient(135deg, #fff 40%, var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        header .subtitle {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 4px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Стили виджетов / секций */
+        .card {
+            background-color: var(--panel);
+            border: 1px solid var(--panel-border);
             border-radius: 16px;
             padding: 14px;
             margin-bottom: 12px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-            border: 1px solid #334155;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
         }
 
-        h2 { margin-top: 0; font-size: 14px; color: #cbd5e1; border-bottom: 1px solid #334155; padding-bottom: 6px; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px;}
-
-        .lobby-panel { background: #1e1b4b; border-color: #4338ca; }
-        .player-tag {
-            display: inline-flex;
-            align-items: center;
-            background: #312e81;
-            padding: 6px 12px;
-            border-radius: 9999px;
+        .card-title {
             font-size: 12px;
-            font-weight: 600;
-            margin: 3px;
-            border: 1px solid #4338ca;
+            font-weight: 800;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            padding-bottom: 6px;
         }
-        .share-link {
+
+        /* Лобби-панель */
+        .lobby-box {
+            background: linear-gradient(135deg, #12132e, #151636);
+            border-color: #312e81;
+        }
+        .net-status {
+            font-size: 11px;
+            background: #064e3b;
+            color: #34d399;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-weight: 700;
+        }
+        .invite-btn {
             width: 100%;
-            background: #090514;
-            color: #818cf8;
+            background: rgba(99, 102, 241, 0.1);
             border: 1px dashed #6366f1;
+            color: #a5b4fc;
             padding: 10px;
             border-radius: 10px;
             font-size: 12px;
-            font-weight: 600;
+            font-weight: 700;
             cursor: pointer;
             margin-top: 8px;
             text-align: center;
         }
 
-        .grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
+        /* События */
+        .event-display {
+            background: rgba(30, 41, 59, 0.5);
+            border-left: 4px solid var(--accent);
+            padding: 12px;
+            border-radius: 0 12px 12px 0;
+            font-size: 13px;
+            font-weight: 600;
+            line-height: 1.5;
+            color: #e2e8f0;
+            min-height: 54px;
+            display: flex;
+            align-items: center;
+        }
+        .action-btn {
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            width: 100%;
+            padding: 12px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 800;
+            cursor: pointer;
+            margin-top: 10px;
+            box-shadow: 0 4px 12px var(--accent-glow);
+        }
+        .action-btn:active { opacity: 0.9; }
 
-        .market-item {
+        /* Игровой Рынок */
+        .market-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .asset-row {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            background: #0f172a;
+            background: #0e131f;
+            border: 1px solid var(--panel-border);
             padding: 12px;
-            border-radius: 12px;
-            border: 1px solid #334155;
+            border-radius: 14px;
         }
-        .market-item.crypto { border-color: #b45309; background: #1c1917; }
-
-        .item-meta { display: flex; flex-direction: column; gap: 2px; }
-        .title { font-weight: 700; font-size: 14px; color: #fff; }
-        .info { font-size: 11px; color: #94a3b8; }
-        .price { font-size: 15px; color: #facc15; font-weight: 800; }
-
-        .counter-controls {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            background: #1e293b;
-            border-radius: 10px;
-            padding: 3px;
+        .asset-row.crypto-type {
+            border-left: 3px solid var(--crypto);
         }
-
-        .btn {
-            background: #475569;
-            color: white;
-            border: none;
-            width: 40px;
-            height: 40px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 18px;
-            font-weight: bold;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        .asset-row.stock-type {
+            border-left: 3px solid var(--accent);
         }
-        .btn:active { background: #64748b; }
-        .count { font-weight: 800; font-size: 16px; min-width: 28px; text-align: center; color: #fff; }
-
-        .event-card {
-            background: linear-gradient(135deg, #1d4ed8, #1e293b);
-            border: 1px solid var(--accent);
-            padding: 14px;
-            border-radius: 12px;
-            text-align: center;
-            min-height: 70px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        #event-text { font-size: 13px; font-weight: 600; line-height: 1.4; color: #fff; }
         
-        .main-btn {
-            background: var(--accent);
-            color: white;
-            border: none;
-            width: 100%;
-            padding: 14px;
-            border-radius: 12px;
-            font-size: 14px;
-            font-weight: 700;
-            cursor: pointer;
-            margin-top: 10px;
+        .asset-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            flex: 1;
         }
-        .main-btn:disabled { background: #475569; opacity: 0.6; }
-
-        .calc-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-        .calc-row input {
-            background: #0f172a;
-            border: 1px solid #334155;
-            color: #fff;
-            padding: 10px;
-            border-radius: 8px;
-            width: 90px;
-            text-align: right;
+        .asset-name {
             font-size: 14px;
-            font-weight: 700;
-            user-select: auto;
-        }
-        #total-score {
-            font-size: 18px;
             font-weight: 800;
+            color: #fff;
+        }
+        .asset-details {
+            font-size: 11px;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+        .asset-price {
+            font-size: 15px;
+            font-weight: 800;
+            color: #facc15;
+            margin-top: 2px;
+        }
+
+        /* Кнопки управления и торговли */
+        .controls-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .price-wheel {
+            display: flex;
+            align-items: center;
+            background: var(--panel);
+            border: 1px solid var(--panel-border);
+            border-radius: 10px;
+            padding: 2px;
+        }
+        .wheel-btn {
+            width: 32px;
+            height: 32px;
+            border: none;
+            background: transparent;
+            color: #94a3b8;
+            font-size: 16px;
+            font-weight: 800;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .wheel-btn:active { color: #fff; }
+        .wheel-value {
+            font-size: 13px;
+            font-weight: 800;
+            min-width: 36px;
             text-align: center;
-            margin-top: 12px;
+        }
+
+        .trade-actions {
+            display: flex;
+            gap: 4px;
+        }
+        .trade-btn {
+            border: none;
+            color: #fff;
+            padding: 8px 12px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 800;
+            cursor: pointer;
+            text-transform: uppercase;
+        }
+        .trade-btn.buy { background: #065f46; border: 1px solid #047857; }
+        .trade-btn.buy:disabled { background: #1c2521; border-color: #27302c; color: #4b5563; cursor: not-allowed; }
+        .trade-btn.sell { background: #991b1b; border: 1px solid #b91c1c; }
+        .trade-btn.sell:disabled { background: #281c1c; border-color: #372525; color: #4b5563; cursor: not-allowed; }
+
+        /* Личный планшет игрока */
+        .player-dashboard {
+            background: #0d1527;
+            border: 1px solid #1e3a8a;
+        }
+        .wallet-display {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+        .wallet-card {
+            flex: 1;
+            background: #090d16;
+            border: 1px solid var(--panel-border);
+            padding: 10px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .wallet-card.total {
+            border-color: var(--success);
+            background: rgba(16, 185, 129, 0.03);
+        }
+        .wallet-label {
+            font-size: 10px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            font-weight: 700;
+            margin-bottom: 2px;
+        }
+        .wallet-value {
+            font-size: 16px;
+            font-weight: 900;
+            color: #fff;
+        }
+        .wallet-card.total .wallet-value {
             color: var(--success);
-            background: #064e3b;
-            padding: 8px;
+        }
+
+        .inventory-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 6px;
+        }
+        .inv-cell {
+            background: #090d16;
+            border: 1px solid var(--panel-border);
             border-radius: 8px;
+            padding: 6px;
+            text-align: center;
+        }
+        .inv-name {
+            font-size: 9px;
+            color: var(--text-muted);
+            font-weight: 700;
+            text-transform: uppercase;
+            display: block;
+            margin-bottom: 2px;
+        }
+        .inv-count {
+            font-size: 15px;
+            font-weight: 800;
+            color: #fff;
         }
     </style>
 </head>
 <body>
 
+<div class="app-container">
     <header>
-        <h1>РЫНОЧНЫЙ ХАОС 🌐</h1>
-        <div class="goal">Гонка до 40 000 валюты • Обход Блокировок</div>
+        <h1>РЫНОЧНЫЙ ХАОС</h1>
+        <div class="subtitle">Официальный Цифровой Симулятор</div>
     </header>
 
-    <div class="section lobby-panel">
-        <h2>👥 Ваша Игровая Пати</h2>
-        <div style="margin-top: 6px; font-size: 12px; color:#94a3b8;">
-            <span id="status-text">Подключение...</span>
+    <div class="card lobby-box">
+        <div class="card-title">
+            <span>🌐 Сетевой хаб</span>
+            <span class="net-status">P2P Активно</span>
         </div>
-        <div id="party-list" style="margin-top: 6px;"></div>
-        <div id="link-container" style="display:none;">
-            <div class="share-link" id="share-link-btn" onclick="copyRoomLink()">Скопировать инвайт-ссылку 🔗</div>
+        <div id="link-area">
+            <div class="invite-btn" id="share-btn" onclick="copySessionLink()">Скопировать инвайт-ссылку для друзей 🔗</div>
         </div>
     </div>
 
-    <div class="section">
-        <h2>🔥 Мировые Новости</h2>
-        <div class="event-card">
-            <div id="event-text">Нажмите кнопку, чтобы открыть событие...</div>
-        </div>
-        <button class="main-btn" id="event-btn" onclick="triggerNextEvent()">Следующий раунд</button>
+    <div class="card">
+        <div class="card-title">🔥 Событие раунда</div>
+        <div class="event-display" id="event-box">Игра готова. Нажмите кнопку, чтобы запустить первый торговый раунд.</div>
+        <button class="action-btn" onclick="nextRoundEvent()">Вытянуть карту события 🎲</button>
     </div>
 
-    <div class="section">
-        <h2>📈 Цены на рынке (Общие)</h2>
-        <div class="grid">
+    <div class="card">
+        <div class="card-title">📈 Глобальный стакан цен и Банк</div>
+        <div class="market-list" id="market-render-root">
+            </div>
+    </div>
+
+    <div class="card player-dashboard">
+        <div class="card-title">🏆 Ваш личный планшет инвестора</div>
+        
+        <div class="wallet-display">
+            <div class="wallet-card">
+                <div class="wallet-label">Доступный Кэш</div>
+                <div class="wallet-value" id="ui-cash">10 000 $</div>
+            </div>
+            <div class="wallet-card total">
+                <div class="wallet-label">Весь Капитал (Цель: 40к)</div>
+                <div class="wallet-value" id="ui-total">10 000 $</div>
+            </div>
+        </div>
+
+        <div class="card-title" style="border:none; margin-bottom: 6px;">📋 Активы в вашей руке (Инвентарь)</div>
+        <div class="inventory-grid" id="inventory-render-root">
+            </div>
+    </div>
+</div>
+
+<script>
+    // Массив карт событий
+    const events = [
+        "🔴 «Эффект Фомо»: Цена той крипты, которой сейчас БОЛЬШЕ ВСЕГО на столе, прямо сейчас удваивается!",
+        "📉 «Маржин-колл»: Тот игрок, у кого сейчас МЕНЬШЕ ВСЕГО наличных денег, обязан слить одну свою акцию в банк за полцены.",
+        "👑 «Захват рынка»: Посмотрите, у кого больше всего акций одной компании. Этот игрок забирает верхнюю карту этой компании из банка бесплатно.",
+        "💰 «Слив инсайда»: Все игроки, у которых сейчас НЕТ НИ ОДНОЙ карты крипты на столе, получают из банка по 1 000 валюты.",
+        "💥 «Пузырь лопнул»: Та крипта, у которой сейчас САМАЯ ВЫСОКАЯ цена на столе, полностью обесценивается (сбрасывается в 0).",
+        "💸 «Налог на роскошь»: Каждый игрок обязан заплатить в банк по 500 за каждую свою Карту №6, №7 или №8 в руке.",
+        "💩 «Скам-проект»: Сбросьте все карты Щиткоинов со стола в сброс. Банк ничего за них не выплачивает.",
+        "⚖️ «Антимонопольный закон»: Игрок, у которого сейчас больше всего карт акций, обязан отдать одну любую карту на выбор соседу справа.",
+        "📊 «Выплата дивидендов»: В этом раунде доход приносят ТОЛЬКО Компании 1 и 2. Остальные компании и вся крипта молчат.",
+        "❄️ «Крипто-зима»: В этом раунде крипту нельзя продавать в банк. Можно только покупать новые карты из колоды рынка."
+    ];
+
+    // Определение ID комнаты
+    const urlParams = new URLSearchParams(window.location.search);
+    let roomId = urlParams.get('room') || ('room_' + Math.random().toString(36).substr(2, 9));
+
+    // Инициализация базы данных реального времени
+    const gun = Gun(['https://gun-manhattan.herokuapp.com/gun', 'https://gundb-relay.up.railway.app/gun']);
+    const room = gun.get('kriptomania_chaos_v3').get(roomId);
+
+    // Глобальное синхронизируемое состояние рынка
+    let sharedState = {
+        stock1: 1, stock2: 1, stock3: 1, stock4: 1, // Индексы карт в банке (1-8)
+        btc: 0, eth: 0, shit: 0,                     // Сколько крипты выложено на стол всего
+        eventText: "Нажмите кнопку, чтобы запустить первый раунд."
+    };
+
+    // Личное состояние текущего игрока (не синхронизируется, у каждого своё)
+    let myPortfolio = {
+        cash: 10000,
+        stock1: 0, stock2: 0, stock3: 0, stock4: 0,
+        btc: 0, eth: 0, shit: 0
+    };
+
+    // Слушаем изменения рынка из сети
+    room.on((data) => {
+        if (data) {
+            if (data.stock1 !== undefined) sharedState.stock1 = data.stock1;
+            if (data.stock2 !== undefined) sharedState.stock2 = data.stock2;
+            if (data.stock3 !== undefined) sharedState.stock3 = data.stock3;
+            if (data.stock4 !== undefined) sharedState.stock4 = data.stock4;
+            if (data.btc !== undefined) sharedState.btc = data.btc;
+            if (data.eth !== undefined) sharedState.eth = data.eth;
+            if (data.shit !== undefined) sharedState.shit = data.shit;
+            if (data.eventText !== undefined) sharedState.eventText = data.eventText;
+            updateGameEngine();
+        }
+    });
+
+    // Генерация ссылки для друзей
+    const inviteLink = window.location.origin + window.location.pathname + "?room=" + roomId;
+    document.getElementById('share-btn').setAttribute('data-link', inviteLink);
+
+    // Расчет цен активов на основе текущего состояния рынка
+    function getCurrentPrices() {
+        return {
+            stock1: 500 + (sharedState.stock1 - 1) * 50,
+            stock2: 600 + (sharedState.stock2 - 1) * 60,
+            stock3: 700 + (sharedState.stock3 - 1) * 70,
+            stock4: 800 + (sharedState.stock4 - 1) * 80,
+            btc: 1000 + (sharedState.btc * 300),
+            eth: 500 + (sharedState.eth * 150),
+            shit: 100 + (sharedState.shit * 100)
+        };
+    }
+
+    // Изменение цен на "колесиках" рынка (доступно всем)
+    function changeMarketParam(field, delta) {
+        let current = sharedState[field];
+        let next = current + delta;
+        
+        if (field.startsWith('stock')) {
+            if (next < 1 || next > 8) return; // Ограничение карт компаний от №1 до №8
+        } else {
+            if (next < 0) return; // Крипты на столе не может быть меньше 0
+        }
+
+        let update = {};
+        update[field] = next;
+        room.put(update);
+    }
+
+    // Логика покупки актива у Банка
+    function buyAsset(key) {
+        const prices = getCurrentPrices();
+        const cost = prices[key];
+
+        if (myPortfolio.cash >= cost) {
+            myPortfolio.cash -= cost;
+            myPortfolio[key]++;
             
-            <div class="market-item">
-                <div class="item-meta">
-                    <span class="title">Компания 1 (Сырьё)</span>
-                    <span class="info" id="stock1-card">Карта в банке: №1</span>
-                    <span class="price" id="stock1-price">Цена: 500</span>
-                </div>
-                <div class="counter-controls">
-                    <button class="btn" onclick="sendMarketAction('stock1', -1)">-</button>
-                    <span class="count" id="stock1-count">1</span>
-                    <button class="btn" onclick="sendMarketAction('stock1', 1)">+</button>
-                </div>
-            </div>
+            // Если это крипта, покупка увеличивает её количество на столе (курс растет)
+            if (!key.startsWith('stock')) {
+                let update = {};
+                update[key] = sharedState[key] + 1;
+                room.put(update);
+            }
+            updateGameEngine();
+        }
+    }
 
-            <div class="market-item">
-                <div class="item-meta">
-                    <span class="title">Компания 2 (IT-Сектор)</span>
-                    <span class="info" id="stock2-card">Карта в банке: №1</span>
-                    <span class="price" id="stock2-price">Цена: 600</span>
-                </div>
-                <div class="counter-controls">
-                    <button class="btn" onclick="sendMarketAction('stock2', -1)">-</button>
-                    <span class="count" id="stock2-count">1</span>
-                    <button class="btn" onclick="sendMarketAction('stock2', 1)">+</button>
-                </div>
-            </div>
+    // Логика продажи актива Банку
+    function sellAsset(key) {
+        if (myPortfolio[key] > 0) {
+            const prices = getCurrentPrices();
+            const profit = prices[key];
 
-            <div class="market-item">
-                <div class="item-meta">
-                    <span class="title">Компания 3 (Нефть/Газ)</span>
-                    <span class="info" id="stock3-card">Карта в банке: №1</span>
-                    <span class="price" id="stock3-price">Цена: 700</span>
-                </div>
-                <div class="counter-controls">
-                    <button class="btn" onclick="sendMarketAction('stock3', -1)">-</button>
-                    <span class="count" id="stock3-count">1</span>
-                    <button class="btn" onclick="sendMarketAction('stock3', 1)">+</button>
-                </div>
-            </div>
+            myPortfolio[key]--;
+            myPortfolio.cash += profit;
 
-            <div class="market-item">
-                <div class="item-meta">
-                    <span class="title">Компания 4 (Космотех)</span>
-                    <span class="info" id="stock4-card">Карта в банке: №1</span>
-                    <span class="price" id="stock4-price">Цена: 800</span>
-                </div>
-                <div class="counter-controls">
-                    <button class="btn" onclick="sendMarketAction('stock4', -1)">-</button>
-                    <span class="count" id="stock4-count">1</span>
-                    <button class="btn" onclick="sendMarketAction('stock4', 1)">+</button>
-                </div>
-            </div>
+            // Если это крипта, продажа уменьшает её количество на столе (курс падает)
+            if (!key.startsWith('stock') && sharedState[key] > 0) {
+                let update = {};
+                update[key] = sharedState[key] - 1;
+                room.put(update);
+            }
+            updateGameEngine();
+        }
+    }
 
-            <div class="market-item crypto">
-                <div class="item-meta">
-                    <span class="title">Bitcoin 🪙</span>
-                    <span class="info">1000 + 300 за др. монету</span>
-                    <span class="price" id="btc-price">Цена: 1 000</span>
-                </div>
-                <div class="counter-controls">
-                    <button class="btn" onclick="sendMarketAction('btc', -1)">-</button>
-                    <span class="count" id="btc-count">0</span>
-                    <button class="btn" onclick="sendMarketAction('btc', 1)">+</button>
-                </div>
-            </div>
+    // Смена игрового события
+    function nextRoundEvent() {
+        const idx = Math.floor(Math.random() * events.length);
+        room.put({ eventText: events[idx] });
+    }
 
-            <div class="market-item crypto" style="border-color: #7c3aed;">
-                <div class="item-meta">
-                    <span class="title">Ethereum 💎</span>
-                    <span class="info">500 + 150 за др. монету</span>
-                    <span class="price" id="eth-price">Цена: 500</span>
-                </div>
-                <div class="counter-controls">
-                    <button class="btn" onclick="sendMarketAction('eth', -1)">-</button>
-                    <span class="count" id="eth-count">0</span>
-                    <button class="btn" onclick="sendMarketAction('eth', 1)">+</button>
-                </div>
-            </div>
+    // Функция обновления всего интерфейса
+    function updateGameEngine() {
+        const prices = getCurrentPrices();
+        
+        // 1. Рендерим Мировое Событие
+        document.getElementById('event-box').innerText = sharedState.eventText;
 
-            <div class="market-item crypto">
-                <div class="item-meta">
-                    <span class="title">Щиткоин 💩</span>
-                    <span class="info">100 + 100 за др. монету</span>
-                    <span class="price" id="shit-count-info">Цена: 100</span>
-                </div>
-                <div class="counter-controls">
-                    <button class="btn" onclick="sendMarketAction('shit', -1)">-</button>
-                    <span class="count" id="shit-count">0</span>
-                    <button class="btn" onclick="sendMarketAction('shit', 1)">+</button>
-                </div>
-            </div>
-
-        </div>
-    </div>
-
-    <div class="section" style="border-color: #10b981;">
-        <h2>🏆 Твой Баланс (Цель: 40 000)</h2>
-        <div class="calc-row">
-            <span>Твой наличный кэш:</span>
-            <input type="number" id="input-cash" value="10000" oninput="calculateLocalTotal()">
-        </div>
-        <div class="calc-row">
-            <span>Стоимость всех твоих карт:</span>
-            <input type="number" id="input-assets" value="0" oninput="calculateLocalTotal()">
-        </div>
-        <div id="total-score">Капитал: 10 000</div>
-    </div>
-
-    <script>
-        const events = [
-            "🔴 «Эффект Фомо»: Цена той крипты, которой сейчас БОЛЬШЕ ВСЕГО на столе, прямо сейчас удваивается!",
-            "📉 «Маржин-колл»: Тот игрок, у кого сейчас МЕНЬШЕ ВСЕГО наличных денег, обязан слить одну свою акцию в банк за полцены.",
-            "👑 «Захват рынка»: Посмотрите, у кого больше всего акций одной компании. Этот игрок забирает верхнюю карту этой компании из банка бесплатно.",
-            "💰 «Слив инсайда»: Все игроки, у которых сейчас НЕТ НИ ОДНОЙ карты крипты на столе, получают из банка по 1 000 валюты.",
-            "💥 «Пузырь лопнул»: Та крипта, у которой сейчас САМАЯ ВЫСОКАЯ цена на столе, полностью обесценивается (сбрасывается в 0).",
-            "💸 «Налог на роскошь»: Каждый игрок обязан заплатить в банк по 500 за каждую свою Карту №6, №7 или №8 в руке.",
-            "💩 «Скам-проект»: Сбросьте все карты Щиткоинов со стола в сброс. Банк ничего за них не выплачивает.",
-            "⚖️ «Антимонопольный закон»: Игрок, у которого сейчас больше всего карт акций, обязан отдать одну любую карту на выбор соседу справа.",
-            "📊 «Выплата дивидендов»: В этом раунде доход приносят ТОЛЬКО Компании 1 и 2. Остальные компании и вся крипта молчат.",
-            "❄️ «Крипто-зима»: В этом раунде крипту нельзя продавать в банк. Можно только покупать новые карты из колоды рынка."
+        // 2. Рендерим таблицу рынка с проверками кнопок купли/продажи
+        const marketData = [
+            { key: 'stock1', name: 'Компания 1 (Сырьё)', type: 'stock', desc: `Верхняя карта в Банке: №${sharedState.stock1}`, price: prices.stock1, val: sharedState.stock1 },
+            { key: 'stock2', name: 'Компания 2 (IT-Сектор)', type: 'stock', desc: `Верхняя карта в Банке: №${sharedState.stock2}`, price: prices.stock2, val: sharedState.stock2 },
+            { key: 'stock3', name: 'Компания 3 (Нефть/Газ)', type: 'stock', desc: `Верхняя карта в Банке: №${sharedState.stock3}`, price: prices.stock3, val: sharedState.stock3 },
+            { key: 'stock4', name: 'Компания 4 (Космотех)', type: 'stock', desc: `Верхняя карта в Банке: №${sharedState.stock4}`, price: prices.stock4, val: sharedState.stock4 },
+            { key: 'btc', name: 'Bitcoin 🪙', type: 'crypto', desc: `Всего карт на общем столе: ${sharedState.btc}`, price: prices.btc, val: sharedState.btc },
+            { key: 'eth', name: 'Ethereum 💎', type: 'crypto', desc: `Всего карт на общем столе: ${sharedState.eth}`, price: prices.eth, val: sharedState.eth },
+            { key: 'shit', name: 'Щиткоин 💩', type: 'crypto', desc: `Всего карт на общем столе: ${sharedState.shit}`, price: prices.shit, val: sharedState.shit }
         ];
 
-        let currentEventIndex = -1;
-        const urlParams = new URLSearchParams(window.location.search);
-        let roomId = urlParams.get('room');
-        
-        if (!roomId) {
-            // Если хост — генерируем случайную комнату
-            roomId = 'room_' + Math.random().toString(36).substr(2, 9);
-        }
+        let marketHtml = '';
+        marketData.forEach(item => {
+            const canBuy = myPortfolio.cash >= item.price;
+            const canSell = myPortfolio[item.key] > 0;
+            const isStock = item.type === 'stock';
 
-        // Подключаемся к стабильным глобальным узлам сокетов dht
-        const gun = Gun(['https://gun-manhattan.herokuapp.com/gun', 'https://gundb-relay.up.railway.app/gun']);
-        const room = gun.get('kriptomania_chaos_app').get(roomId);
-
-        // Начальное состояние рынка
-        let localState = {
-            stock1: 1, stock2: 1, stock3: 1, stock4: 1,
-            btc: 0, eth: 0, shit: 0,
-            eventText: "Игра готова! Нажмите кнопку для старта раунда."
-        };
-
-        // Слушаем изменения в комнате
-        room.on((data) => {
-            if (data) {
-                // Синхронизируем полученные значения с экрана
-                if (data.stock1 !== undefined) localState.stock1 = data.stock1;
-                if (data.stock2 !== undefined) localState.stock2 = data.stock2;
-                if (data.stock3 !== undefined) localState.stock3 = data.stock3;
-                if (data.stock4 !== undefined) localState.stock4 = data.stock4;
-                if (data.btc !== undefined) localState.btc = data.btc;
-                if (data.eth !== undefined) localState.eth = data.eth;
-                if (data.shit !== undefined) localState.shit = data.shit;
-                if (data.eventText !== undefined) localState.eventText = data.eventText;
-                renderMarket();
-            }
+            marketHtml += `
+                <div class="asset-row ${isStock ? 'stock-type' : 'crypto-type'}">
+                    <div class="asset-info">
+                        <span class="asset-name">${item.name}</span>
+                        <span class="asset-details">${item.desc}</span>
+                        <span class="asset-price">${item.price.toLocaleString()} $</span>
+                    </div>
+                    <div class="controls-group">
+                        <div class="price-wheel">
+                            <button class="wheel-btn" onclick="changeMarketParam('${item.key}', -1)">−</button>
+                            <span class="wheel-value">${isStock ? '№' + item.val : item.val + ' шт'}</span>
+                            <button class="wheel-btn" onclick="changeMarketParam('${item.key}', 1)">+</button>
+                        </div>
+                        <div class="trade-actions">
+                            <button class="trade-btn buy" ${canBuy ? '' : 'disabled'} onclick="buyAsset('${item.key}')">Купить</button>
+                            <button class="trade-btn sell" ${canSell ? '' : 'disabled'} onclick="sellAsset('${item.key}')">Сдать</button>
+                        </div>
+                    </div>
+                </div>
+            `;
         });
+        document.getElementById('market-render-root').innerHTML = marketHtml;
 
-        // Инициализация UI
-        document.getElementById('status-text').innerText = "Сеть активна. Вы подключены!";
-        const roomLink = window.location.origin + window.location.pathname + "?room=" + roomId;
-        document.getElementById('share-link-btn').setAttribute('data-link', roomLink);
-        document.getElementById('link-container').style.display = "block";
+        // 3. Расчет личного капитала игрока
+        let totalAssetsValue = 
+            (myPortfolio.stock1 * prices.stock1) +
+            (myPortfolio.stock2 * prices.stock2) +
+            (myPortfolio.stock3 * prices.stock3) +
+            (myPortfolio.stock4 * prices.stock4) +
+            (myPortfolio.btc * prices.btc) +
+            (myPortfolio.eth * prices.eth) +
+            (myPortfolio.shit * prices.shit);
+
+        let finalCapital = myPortfolio.cash + totalAssetsValue;
+
+        // 4. Обновление плашек баланса
+        document.getElementById('ui-cash').innerText = myPortfolio.cash.toLocaleString() + " $";
         
-        let playersCount = urlParams.get('room') ? 2 : 1;
-        updatePartyUI(playersCount);
-
-        function triggerNextEvent() {
-            currentEventIndex = Math.floor(Math.random() * events.length);
-            room.put({ eventText: events[currentEventIndex] });
+        const totalUi = document.getElementById('ui-total');
+        if (finalCapital >= 40000) {
+            totalUi.style.color = '#10b981';
+            totalUi.innerText = finalCapital.toLocaleString() + " $ 👑 ПОБЕДА!";
+        } else {
+            totalUi.style.color = '#fff';
+            totalUi.innerText = finalCapital.toLocaleString() + " $";
         }
 
-        function sendMarketAction(field, val) {
-            let newVal = Math.max(0, localState[field] + val);
-            if (field.startsWith('stock')) {
-                newVal = Math.max(1, Math.min(8, localState[field] + val));
-            }
-            let update = {};
-            update[field] = newVal;
-            room.put(update);
-        }
+        // 5. Рендерим инвентарь игрока
+        const invData = [
+            { name: 'Комп. 1', count: myPortfolio.stock1 },
+            { name: 'Комп. 2', count: myPortfolio.stock2 },
+            { name: 'Комп. 3', count: myPortfolio.stock3 },
+            { name: 'Комп. 4', count: myPortfolio.stock4 },
+            { name: 'BTC', count: myPortfolio.btc },
+            { name: 'ETH', count: myPortfolio.eth },
+            { name: 'SHIT', count: myPortfolio.shit }
+        ];
 
-        function renderMarket() {
-            document.getElementById('event-text').innerText = localState.eventText;
+        let invHtml = '';
+        invData.forEach(cell => {
+            invHtml += `
+                <div class="inv-cell">
+                    <span class="inv-name">${cell.name}</span>
+                    <span class="inv-count">${cell.count}</span>
+                </div>
+            `;
+        });
+        document.getElementById('inventory-render-root').innerHTML = invHtml;
+    }
 
-            document.getElementById('stock1-count').innerText = localState.stock1;
-            document.getElementById('stock1-card').innerText = "Карта в банке: №" + localState.stock1;
-            document.getElementById('stock1-price').innerText = "Цена: " + (500 + (localState.stock1 - 1) * 50);
+    // Копирование инвайта
+    function copySessionLink() {
+        const btn = document.getElementById('share-btn');
+        const link = btn.getAttribute('data-link');
+        const el = document.createElement('textarea');
+        el.value = link;
+        document.body.appendChild(el);
+        el.select();
+        document.execCommand('copy');
+        document.body.removeChild(el);
 
-            document.getElementById('stock2-count').innerText = localState.stock2;
-            document.getElementById('stock2-card').innerText = "Карта в банке: №" + localState.stock2;
-            document.getElementById('stock2-price').innerText = "Цена: " + (600 + (localState.stock2 - 1) * 60);
+        btn.innerText = "Ссылка скопирована! Пересылай 🚀";
+        setTimeout(() => { btn.innerText = "Скопировать инвайт-ссылку для друзей 🔗"; }, 3000);
+    }
 
-            document.getElementById('stock3-count').innerText = localState.stock3;
-            document.getElementById('stock3-card').innerText = "Карта в банке: №" + localState.stock3;
-            document.getElementById('stock3-price').innerText = "Цена: " + (700 + (localState.stock3 - 1) * 70);
+    // Первый запуск
+    updateGameEngine();
+</script>
 
-            document.getElementById('stock4-count').innerText = localState.stock4;
-            document.getElementById('stock4-card').innerText = "Карта в банке: №" + localState.stock4;
-            document.getElementById('stock4-price').innerText = "Цена: " + (800 + (localState.stock4 - 1) * 80);
-
-            document.getElementById('btc-count').innerText = localState.btc;
-            let btcOthers = Math.max(0, localState.btc - 1);
-            document.getElementById('btc-price').innerText = "Цена: " + (1000 + (btcOthers * 300));
-
-            document.getElementById('eth-count').innerText = localState.eth;
-            let ethOthers = Math.max(0, localState.eth - 1);
-            document.getElementById('eth-price').innerText = "Цена: " + (500 + (ethOthers * 150));
-
-            document.getElementById('shit-count').innerText = localState.shit;
-            let shitOthers = Math.max(0, localState.shit - 1);
-            document.getElementById('shit-count-info').innerText = "Цена: " + (100 + (shitOthers * 100));
-
-            calculateLocalTotal();
-        }
-
-        function updatePartyUI(count) {
-            let listHtml = `<span class="player-tag">Ты</span>`;
-            if (count > 1) {
-                listHtml += `<span class="player-tag">Друзья в сети 🟢</span>`;
-            }
-            document.getElementById('party-list').innerHTML = listHtml;
-        }
-
-        function copyRoomLink() {
-            const btn = document.getElementById('share-link-btn');
-            const link = btn.getAttribute('data-link');
-            
-            const el = document.createElement('textarea');
-            el.value = link;
-            document.body.appendChild(el);
-            el.select();
-            document.execCommand('copy');
-            document.body.removeChild(el);
-
-            btn.innerText = "Ссылка скопирована! Отправляй 🚀";
-            setTimeout(() => { btn.innerText = "Скопировать инвайт-ссылку 🔗"; }, 2500);
-        }
-
-        function calculateLocalTotal() {
-            let cash = parseInt(document.getElementById('input-cash').value) || 0;
-            let assets = parseInt(document.getElementById('input-assets').value) || 0;
-            let total = cash + assets;
-
-            let output = document.getElementById('total-score');
-            if (total >= 40000) {
-                output.style.background = "#065f46";
-                output.innerText = "Капитал: " + total.toLocaleString('ru-RU') + " 🎉 ПОБЕДА!";
-            } else {
-                output.style.background = "#064e3b";
-                output.innerText = "Капитал: " + total.toLocaleString('ru-RU');
-            }
-        }
-        
-        // Первый запуск рендера
-        renderMarket();
-    </script>
 </body>
 </html>
