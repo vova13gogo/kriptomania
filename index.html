@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Рыночный Хаос — Супер Сеть</title>
+    <title>Рыночный Хаос — GunDB Edition</title>
     
-    <script src="https://cdn.jsdelivr.net/npm/peerjs@1.4.7/dist/peerjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
     
     <style>
         :root {
@@ -169,13 +169,13 @@
 
     <header>
         <h1>РЫНОЧНЫЙ ХАОС 🌐</h1>
-        <div class="goal">Гонка до 40 000 валюты • VPN-Режим</div>
+        <div class="goal">Гонка до 40 000 валюты • Обход Блокировок</div>
     </header>
 
     <div class="section lobby-panel">
         <h2>👥 Ваша Игровая Пати</h2>
         <div style="margin-top: 6px; font-size: 12px; color:#94a3b8;">
-            <span id="status-text">Подключение к защищенному шлюзу...</span>
+            <span id="status-text">Подключение...</span>
         </div>
         <div id="party-list" style="margin-top: 6px;"></div>
         <div id="link-container" style="display:none;">
@@ -186,9 +186,9 @@
     <div class="section">
         <h2>🔥 Мировые Новости</h2>
         <div class="event-card">
-            <div id="event-text">Ожидание подключения или старта раунда...</div>
+            <div id="event-text">Нажмите кнопку, чтобы открыть событие...</div>
         </div>
-        <button class="main-btn" id="event-btn" onclick="triggerNextEvent()" disabled>Следующий раунд</button>
+        <button class="main-btn" id="event-btn" onclick="triggerNextEvent()">Следующий раунд</button>
     </div>
 
     <div class="section">
@@ -316,176 +316,105 @@
             "❄️ «Крипто-зима»: В этом раунде крипту нельзя продавать в банк. Можно только покупать новые карты из колоды рынка."
         ];
 
-        let peer = null;
-        let connections = [];
-        let isHost = false;
-        let myId = "";
         let currentEventIndex = -1;
+        const urlParams = new URLSearchParams(window.location.search);
+        let roomId = urlParams.get('room');
+        
+        if (!roomId) {
+            // Если хост — генерируем случайную комнату
+            roomId = 'room_' + Math.random().toString(36).substr(2, 9);
+        }
 
-        let gameState = {
+        // Подключаемся к стабильным глобальным узлам сокетов dht
+        const gun = Gun(['https://gun-manhattan.herokuapp.com/gun', 'https://gundb-relay.up.railway.app/gun']);
+        const room = gun.get('kriptomania_chaos_app').get(roomId);
+
+        // Начальное состояние рынка
+        let localState = {
             stock1: 1, stock2: 1, stock3: 1, stock4: 1,
             btc: 0, eth: 0, shit: 0,
-            eventText: "Нажмите кнопку, чтобы открыть событие..."
+            eventText: "Игра готова! Нажмите кнопку для старта раунда."
         };
 
-        const urlParams = new URLSearchParams(window.location.search);
-        const roomToJoin = urlParams.get('room');
+        // Слушаем изменения в комнате
+        room.on((data) => {
+            if (data) {
+                // Синхронизируем полученные значения с экрана
+                if (data.stock1 !== undefined) localState.stock1 = data.stock1;
+                if (data.stock2 !== undefined) localState.stock2 = data.stock2;
+                if (data.stock3 !== undefined) localState.stock3 = data.stock3;
+                if (data.stock4 !== undefined) localState.stock4 = data.stock4;
+                if (data.btc !== undefined) localState.btc = data.btc;
+                if (data.eth !== undefined) localState.eth = data.eth;
+                if (data.shit !== undefined) localState.shit = data.shit;
+                if (data.eventText !== undefined) localState.eventText = data.eventText;
+                renderMarket();
+            }
+        });
 
-        if (roomToJoin) { isHost = false; initPeer(); } 
-        else { isHost = true; initPeer(); }
-
-        function initPeer() {
-            // ИСПОЛЬЗУЕМ СТАНДАРТНЫЙ HTTPS/WSS ПРОТОКОЛ, КОТОРЫЙ ПРОПУСКАЮТ ВСЕ VPN
-            peer = new Peer(undefined, {
-                host: '0.peerjs.com',
-                port: 443,
-                path: '/',
-                secure: true,
-                config: {
-                    'iceServers': [
-                        { 'urls': 'stun:stun.l.google.com:19302' },
-                        { 'urls': 'stun:stun1.l.google.com:19302' }
-                    ]
-                }
-            });
-
-            peer.on('open', (id) => {
-                myId = id;
-                if (isHost) {
-                    document.getElementById('status-text').innerText = "Вы — Хост. Комната успешно создана!";
-                    const roomLink = window.location.origin + window.location.pathname + "?room=" + id;
-                    document.getElementById('share-link-btn').setAttribute('data-link', roomLink);
-                    document.getElementById('link-container').style.display = "block";
-                    document.getElementById('event-btn').disabled = false;
-                    updatePartyUI();
-                } else {
-                    document.getElementById('status-text').innerText = "Синхронизация с хостом...";
-                    connectToHost(roomToJoin);
-                }
-            });
-
-            peer.on('connection', (conn) => {
-                if (isHost) {
-                    connections.push(conn);
-                    setupConnectionListeners(conn);
-                    setTimeout(() => {
-                        conn.send({ type: 'SYNC', state: gameState });
-                        broadcast({ type: 'PARTY_UPDATE', count: connections.length + 1 });
-                    }, 500);
-                    updatePartyUI();
-                }
-            });
-
-            peer.on('error', (err) => {
-                console.log("Сетевой статус: обход блокировок...");
-                // Автоматический перезапуск при сбоях сети
-                setTimeout(() => { if(!peer.destroyed) { initPeer(); } }, 3000);
-            });
-        }
-
-        function connectToHost(hostId) {
-            let conn = peer.connect(hostId);
-            connections.push(conn);
-            setupConnectionListeners(conn);
-        }
-
-        function setupConnectionListeners(conn) {
-            conn.on('open', () => {
-                if (!isHost) document.getElementById('status-text').innerText = "Подключено к пати! Успешный вход.";
-            });
-
-            conn.on('data', (data) => {
-                if (data.type === 'SYNC') { gameState = data.state; renderMarket(); }
-                if (data.type === 'PARTY_UPDATE') { updatePartyUI(data.count); }
-                if (data.type === 'ACTION' && isHost) {
-                    processMarketLogic(data.field, data.val);
-                    broadcast({ type: 'SYNC', state: gameState });
-                    renderMarket();
-                }
-            });
-
-            conn.on('close', () => {
-                connections = connections.filter(c => c !== conn);
-                if (isHost) {
-                    broadcast({ type: 'PARTY_UPDATE', count: connections.length + 1 });
-                    updatePartyUI();
-                }
-            });
-        }
-
-        function broadcast(data) {
-            connections.forEach(conn => { if (conn.open) conn.send(data); });
-        }
+        // Инициализация UI
+        document.getElementById('status-text').innerText = "Сеть активна. Вы подключены!";
+        const roomLink = window.location.origin + window.location.pathname + "?room=" + roomId;
+        document.getElementById('share-link-btn').setAttribute('data-link', roomLink);
+        document.getElementById('link-container').style.display = "block";
+        
+        let playersCount = urlParams.get('room') ? 2 : 1;
+        updatePartyUI(playersCount);
 
         function triggerNextEvent() {
-            if (!isHost) return;
-            currentEventIndex++;
-            if (currentEventIndex >= events.length) currentEventIndex = 0;
-            gameState.eventText = events[currentEventIndex];
-            broadcast({ type: 'SYNC', state: gameState });
-            renderMarket();
+            currentEventIndex = Math.floor(Math.random() * events.length);
+            room.put({ eventText: events[currentEventIndex] });
         }
 
         function sendMarketAction(field, val) {
-            if (isHost) {
-                processMarketLogic(field, val);
-                broadcast({ type: 'SYNC', state: gameState });
-                renderMarket();
-            } else {
-                if (connections[0] && connections[0].open) {
-                    connections[0].send({ type: 'ACTION', field: field, val: val });
-                }
+            let newVal = Math.max(0, localState[field] + val);
+            if (field.startsWith('stock')) {
+                newVal = Math.max(1, Math.min(8, localState[field] + val));
             }
-        }
-
-        function processMarketLogic(field, val) {
-            if (field === 'stock1') gameState.stock1 = Math.max(1, Math.min(8, gameState.stock1 + val));
-            else if (field === 'stock2') gameState.stock2 = Math.max(1, Math.min(8, gameState.stock2 + val));
-            else if (field === 'stock3') gameState.stock3 = Math.max(1, Math.min(8, gameState.stock3 + val));
-            else if (field === 'stock4') gameState.stock4 = Math.max(1, Math.min(8, gameState.stock4 + val));
-            else if (field === 'btc') gameState.btc = Math.max(0, gameState.btc + val);
-            else if (field === 'eth') gameState.eth = Math.max(0, gameState.eth + val);
-            else if (field === 'shit') gameState.shit = Math.max(0, gameState.shit + val);
+            let update = {};
+            update[field] = newVal;
+            room.put(update);
         }
 
         function renderMarket() {
-            document.getElementById('event-text').innerText = gameState.eventText;
+            document.getElementById('event-text').innerText = localState.eventText;
 
-            document.getElementById('stock1-count').innerText = gameState.stock1;
-            document.getElementById('stock1-card').innerText = "Карта в банке: №" + gameState.stock1;
-            document.getElementById('stock1-price').innerText = "Цена: " + (500 + (gameState.stock1 - 1) * 50);
+            document.getElementById('stock1-count').innerText = localState.stock1;
+            document.getElementById('stock1-card').innerText = "Карта в банке: №" + localState.stock1;
+            document.getElementById('stock1-price').innerText = "Цена: " + (500 + (localState.stock1 - 1) * 50);
 
-            document.getElementById('stock2-count').innerText = gameState.stock2;
-            document.getElementById('stock2-card').innerText = "Карта в банке: №" + gameState.stock2;
-            document.getElementById('stock2-price').innerText = "Цена: " + (600 + (gameState.stock2 - 1) * 60);
+            document.getElementById('stock2-count').innerText = localState.stock2;
+            document.getElementById('stock2-card').innerText = "Карта в банке: №" + localState.stock2;
+            document.getElementById('stock2-price').innerText = "Цена: " + (600 + (localState.stock2 - 1) * 60);
 
-            document.getElementById('stock3-count').innerText = gameState.stock3;
-            document.getElementById('stock3-card').innerText = "Карта в банке: №" + gameState.stock3;
-            document.getElementById('stock3-price').innerText = "Цена: " + (700 + (gameState.stock3 - 1) * 70);
+            document.getElementById('stock3-count').innerText = localState.stock3;
+            document.getElementById('stock3-card').innerText = "Карта в банке: №" + localState.stock3;
+            document.getElementById('stock3-price').innerText = "Цена: " + (700 + (localState.stock3 - 1) * 70);
 
-            document.getElementById('stock4-count').innerText = gameState.stock4;
-            document.getElementById('stock4-card').innerText = "Карта в банке: №" + gameState.stock4;
-            document.getElementById('stock4-price').innerText = "Цена: " + (800 + (gameState.stock4 - 1) * 80);
+            document.getElementById('stock4-count').innerText = localState.stock4;
+            document.getElementById('stock4-card').innerText = "Карта в банке: №" + localState.stock4;
+            document.getElementById('stock4-price').innerText = "Цена: " + (800 + (localState.stock4 - 1) * 80);
 
-            document.getElementById('btc-count').innerText = gameState.btc;
-            let btcOthers = Math.max(0, gameState.btc - 1);
+            document.getElementById('btc-count').innerText = localState.btc;
+            let btcOthers = Math.max(0, localState.btc - 1);
             document.getElementById('btc-price').innerText = "Цена: " + (1000 + (btcOthers * 300));
 
-            document.getElementById('eth-count').innerText = gameState.eth;
-            let ethOthers = Math.max(0, gameState.eth - 1);
+            document.getElementById('eth-count').innerText = localState.eth;
+            let ethOthers = Math.max(0, localState.eth - 1);
             document.getElementById('eth-price').innerText = "Цена: " + (500 + (ethOthers * 150));
 
-            document.getElementById('shit-count').innerText = gameState.shit;
-            let shitOthers = Math.max(0, gameState.shit - 1);
+            document.getElementById('shit-count').innerText = localState.shit;
+            let shitOthers = Math.max(0, localState.shit - 1);
             document.getElementById('shit-count-info').innerText = "Цена: " + (100 + (shitOthers * 100));
 
             calculateLocalTotal();
         }
 
-        function updatePartyUI(forcedCount) {
-            let count = isHost ? (connections.length + 1) : forcedCount || 1;
+        function updatePartyUI(count) {
             let listHtml = `<span class="player-tag">Ты</span>`;
-            for (let i = 1; i < count; i++) { listHtml += `<span class="player-tag">Игрок ${i + 1} 🟢</span>`; }
+            if (count > 1) {
+                listHtml += `<span class="player-tag">Друзья в сети 🟢</span>`;
+            }
             document.getElementById('party-list').innerHTML = listHtml;
         }
 
@@ -518,6 +447,9 @@
                 output.innerText = "Капитал: " + total.toLocaleString('ru-RU');
             }
         }
+        
+        // Первый запуск рендера
+        renderMarket();
     </script>
 </body>
 </html>
