@@ -341,7 +341,12 @@
         window.history.replaceState({}, '', window.location.pathname + '?room=' + roomId);
     }
 
-    const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
+    const gun = Gun([
+    'https://gun-us.herokuapp.com/gun',
+    'https://gun-eu.herokuapp.com/gun',
+    'https://gun-relay.flux.zone/gun',
+    'https://gundb-relay.up.railway.app/gun'
+]);
     const room = gun.get('kriptomania_chaos_v9').get(roomId);
 
     let myId = localStorage.getItem('km_id') || ('u_' + Math.random().toString(36).substr(2, 9));
