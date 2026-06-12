@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Рыночный Хаос — Сетевая Игра</title>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.2/peerjs.min.js"></script>
+    
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --accent: #3b82f6;
+            --success: #10b981;
+            --danger: #ef4444;
+            --text: #f8fafc;
+        }
+
+        /* Оптимизация под мобильные экраны (засечки, скролл, запрет выделения текста) */
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent; /* Убираем синий блик при тапе на iOS */
+            user-select: none; /* Запрещаем случайное выделение текста при частых тапах */
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text);
+            margin: 0;
+            padding: 12px;
+            padding-bottom: calc(12px + env(safe-area-inset-bottom)); /* Поддержка челок iPhone */
+            padding-top: calc(12px + env(safe-area-inset-top));
+            line-height: 1.4;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 12px;
+        }
+
+        h1 { margin: 0; color: #fff; font-size: 20px; font-weight: 800; letter-spacing: -0.5px; }
+        .goal { color: #94a3b8; font-size: 12px; margin-top: 2px; }
+
+        .section {
+            background: var(--card-bg);
+            border-radius: 16px; /* Более мягкие мобильные углы */
+            padding: 14px;
+            margin-bottom: 12px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            border: 1px solid #334155;
+        }
+
+        h2 { margin-top: 0; font-size: 15px; color: #cbd5e1; border-bottom: 1px solid #334155; padding-bottom: 6px; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px;}
+
+        /* Лобби панель */
+        .lobby-panel { background: #1e1b4b; border-color: #4338ca; }
+        .player-tag {
+            display: inline-flex;
+            align-items: center;
+            background: #312e81;
+            padding: 6px 12px;
+            border-radius: 9999px;
+            font-size: 12px;
+            font-weight: 600;
+            margin: 3px;
+            border: 1px solid #4338ca;
+        }
+        .share-link {
+            width: 100%;
+            background: #090514;
+            color: #818cf8;
+            border: 1px dashed #6366f1;
+            padding: 10px;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 8px;
+            text-align: center;
+        }
+
+        /* Адаптивная мобильная сетка в один ряд для экономии места */
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+        }
+
+        .market-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #0f172a;
+            padding: 12px;
+            border-radius: 12px;
+            border: 1px solid #334155;
+        }
+        .market-item.crypto { border-color: #b45309; background: #1c1917; }
+
+        .item-meta { display: flex; flex-direction: column; gap: 2px; }
+        .title { font-weight: 700; font-size: 14px; color: #fff; }
+        .info { font-size: 11px; color: #94a3b8; }
+        .price { font-size: 15px; color: #facc15; font-weight: 800; margin-top: 1px; }
+
+        /* Укрупненные кнопки под пальцы (Fat Fingers) */
+        .counter-controls {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            background: #1e293b;
+            border-radius: 10px;
+            padding: 3px;
+        }
+
+        .btn {
+            background: #475569;
+            color: white;
+            border: none;
+            width: 40px;  /* Идеальный размер для тапа */
+            height: 40px; /* Идеальный размер для тапа */
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .btn:active { background: #64748b; }
+        .count { font-weight: 800; font-size: 16px; min-width: 28px; text-align: center; color: #fff; }
+
+        /* События раунда */
+        .event-card {
+            background: linear-gradient(135deg, #1d4ed8, #1e293b);
+            border: 1px solid var(--accent);
+            padding: 14px;
+            border-radius: 12px;
+            text-align: center;
+            min-height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+        }
+        #event-text { font-size: 13px; font-weight: 600; line-height: 1.4; color: #fff; }
+        
+        .main-btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            width: 100%;
+            padding: 14px; /* Увеличили высоту тапа */
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 10px;
+            box-shadow: 0 4px 6px rgba(37, 99, 235, 0.2);
+        }
+        .main-btn:active { opacity: 0.8; }
+        .main-btn:disabled { background: #475569; box-shadow: none; opacity: 0.6; }
+
+        /* Калькулятор */
+        .calc-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+        .calc-row input {
+            background: #0f172a;
+            border: 1px solid #334155;
+            color: #fff;
+            padding: 10px; /* Удобнее тапать на мобиле */
+            border-radius: 8px;
+            width: 90px;
+            text-align: right;
+            font-size: 14px;
+            font-weight: 700;
+            user-select: auto; /* Позволяем вводить цифры */
+        }
+        #total-score {
+            font-size: 18px;
+            font-weight: 800;
+            text-align: center;
+            margin-top: 12px;
+            color: var(--success);
+            background: #064e3b;
+            padding: 8px;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>РЫНОЧНЫЙ ХАОС 🌐</h1>
+        <div class="goal">Гонка до 40 000 валюты • Онлайн Пати</div>
+    </header>
+
+    <div class="section lobby-panel">
+        <h2 style="border:none; margin:0; padding:0; font-size:14px; color:#cbd5e1;">👥 Ваша Игровая Пати</h2>
+        <div style="margin-top: 6px; font-size: 12px; color:#94a3b8;">
+            <span id="status-text">Инициализация сети...</span>
+        </div>
+        <div id="party-list" style="margin-top: 6px;"></div>
+        <div id="link-container" style="display:none;">
+            <div class="share-link" id="share-link-btn" onclick="copyRoomLink()">Скопировать инвайт-ссылку 🔗</div>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>🔥 Мировые Новости</h2>
+        <div class="event-card">
+            <div id="event-text">Ожидание подключения или старта раунда...</div>
+        </div>
+        <button class="main-btn" id="event-btn" onclick="triggerNextEvent()" disabled>Следующий раунд</button>
+    </div>
+
+    <div class="section">
+        <h2>📈 Цены на рынке (Общие)</h2>
+        <div class="grid">
+            
+            <div class="market-item">
+                <div class="item-meta">
+                    <span class="title">Компания 1 (Сырьё)</span>
+                    <span class="info" id="stock1-card">Карта в банке: №1</span>
+                    <span class="price" id="stock1-price">Цена: 500</span>
+                </div>
+                <div class="counter-controls">
+                    <button class="btn" onclick="sendMarketAction('stock1', -1)">-</button>
+                    <span class="count" id="stock1-count">1</span>
+                    <button class="btn" onclick="sendMarketAction('stock1', 1)">+</button>
+                </div>
+            </div>
+
+            <div class="market-item">
+                <div class="item-meta">
+                    <span class="title">Компания 2 (IT)</span>
+                    <span class="info" id="stock2-card">Карта в банке: №1</span>
+                    <span class="price" id="stock2-price">Цена: 600</span>
+                </div>
+                <div class="counter-controls">
+                    <button class="btn" onclick="sendMarketAction('stock2', -1)">-</button>
+                    <span class="count" id="stock2-count">1</span>
+                    <button class="btn" onclick="sendMarketAction('stock2', 1)">+</button>
+                </div>
+            </div>
+
+            <div class="market-item crypto">
+                <div class="item-meta">
+                    <span class="title">Bitcoin 🪙</span>
+                    <span class="info">1000 + 300 за др. монету</span>
+                    <span class="price" id="btc-price">Цена: 1 000</span>
+                </div>
+                <div class="counter-controls">
+                    <button class="btn" onclick="sendMarketAction('btc', -1)">-</button>
+                    <span class="count" id="btc-count">0</span>
+                    <button class="btn" onclick="sendMarketAction('btc', 1)">+</button>
+                </div>
+            </div>
+
+            <div class="market-item crypto">
+                <div class="item-meta">
+                    <span class="title">Щиткоин 💩</span>
+                    <span class="info">100 + 100 за др. монету</span>
+                    <span class="price" id="shit-count-info">Цена: 100</span>
+                </div>
+                <div class="counter-controls">
+                    <button class="btn" onclick="sendMarketAction('shit', -1)">-</button>
+                    <span class="count" id="shit-count">0</span>
+                    <button class="btn" onclick="sendMarketAction('shit', 1)">+</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="section" style="border-color: #10b981;">
+        <h2>🏆 Твой Баланс (Цель: 40 000)</h2>
+        <div class="calc-row">
+            <span>Твой наличный кэш:</span>
+            <input type="number" id="input-cash" value="10000" oninput="calculateLocalTotal()">
+        </div>
+        <div class="calc-row">
+            <span>Стоимость всех твоих карт:</span>
+            <input type="number" id="input-assets" value="0" oninput="calculateLocalTotal()">
+        </div>
+        <div id="total-score">Капитал: 10 000</div>
+    </div>
+
+    <script>
+        // Код логики полностью идентичен прошлому скрипту, 
+        // но адаптирован под рендер новых компактных элементов интерфейса.
+        const events = [
+            "🔴 «Эффект Фомо»: Цена той крипты, которой сейчас БОЛЬШЕ ВСЕГО на столе, прямо сейчас удваивается!",
+            "📉 «Маржин-колл»: Тот игрок, у кого сейчас МЕНЬШЕ ВСЕГО наличных денег, обязан слить одну свою акцию в банк за полцены.",
+            "👑 «Захват рынка»: Посмотрите, у кого больше всего акций одной компании. Этот игрок забирает верхнюю карту этой компании из банка бесплатно.",
+            "💰 «Слив инсайда»: Все игроки, у которых сейчас НЕТ НИ ОДНОЙ карты крипты на столе, получают из банка по 1 000 валюты.",
+            "💥 «Пузырь лопнул»: Та крипта, у которой сейчас САМАЯ ВЫСОКАЯ цена на столе, полностью обесценивается (сбрасывается в 0).",
+            "💸 «Налог на роскошь»: Каждый игрок обязан заплатить в банк по 500 за каждую свою Карту №6, №7 или №8 в руке.",
+            "💩 «Скам-проект»: Сбросьте все карты Щиткоинов со стола в сброс. Банк ничего за них не выплачивает.",
+            "⚖️ «Антимонопольный закон»: Игрок, у которого сейчас больше всего карт акций, обязан отдать одну любую карту на выбор соседу справа.",
+            "📊 «Выплата дивидендов»: В этом раунде доход приносят ТОЛЬКО Компании 1 и 2. Остальные компании и вся крипта молчат.",
+            "❄️ «Крипто-зима»: В этом раунде крипту нельзя продавать в банк. Можно только покупать новые карты из колоды рынка."
+        ];
+
+        let peer = null;
+        let connections = [];
+        let isHost = false;
+        let myId = "";
+        let currentEventIndex = -1;
+
+        let gameState = {
+            stock1: 1,
+            stock2: 1,
+            btc: 0,
+            shit: 0,
+            eventText: "Нажмите кнопку, чтобы открыть событие..."
+        };
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const roomToJoin = urlParams.get('room');
+
+        if (roomToJoin) {
+            isHost = false;
+            initPeer();
+        } else {
+            isHost = true;
+            initPeer();
+        }
+
+        function initPeer() {
+            peer = new Peer();
+
+            peer.on('open', (id) => {
+                myId = id;
+                if (isHost) {
+                    document.getElementById('status-text').innerText = "Вы — Хост. Лобби создано!";
+                    const roomLink = window.location.origin + window.location.pathname + "?room=" + id;
+                    document.getElementById('share-link-btn').setAttribute('data-link', roomLink);
+                    document.getElementById('link-container').style.display = "block";
+                    document.getElementById('event-btn').disabled = false;
+                    updatePartyUI();
+                } else {
+                    document.getElementById('status-text').innerText = "Подключение к пати лидера...";
+                    connectToHost(roomToJoin);
+                }
+            });
+
+            peer.on('connection', (conn) => {
+                if (isHost) {
+                    connections.push(conn);
+                    setupConnectionListeners(conn);
+                    setTimeout(() => {
+                        conn.send({ type: 'SYNC', state: gameState });
+                        broadcast({ type: 'PARTY_UPDATE', count: connections.length + 1 });
+                    }, 500);
+                    updatePartyUI();
+                }
+            });
+        }
+
+        function connectToHost(hostId) {
+            let conn = peer.connect(hostId);
+            connections.push(conn);
+            setupConnectionListeners(conn);
+        }
+
+        function setupConnectionListeners(conn) {
+            conn.on('open', () => {
+                if (!isHost) {
+                    document.getElementById('status-text').innerText = "Подключено к пати! Играем.";
+                }
+            });
+
+            conn.on('data', (data) => {
+                if (data.type === 'SYNC') {
+                    gameState = data.state;
+                    renderMarket();
+                }
+                if (data.type === 'PARTY_UPDATE') {
+                    updatePartyUI(data.count);
+                }
+                if (data.type === 'ACTION' && isHost) {
+                    processMarketLogic(data.field, data.val);
+                    broadcast({ type: 'SYNC', state: gameState });
+                    renderMarket();
+                }
+            });
+
+            conn.on('close', () => {
+                connections = connections.filter(c => c !== conn);
+                if (isHost) {
+                    broadcast({ type: 'PARTY_UPDATE', count: connections.length + 1 });
+                    updatePartyUI();
+                }
+            });
+        }
+
+        function broadcast(data) {
+            connections.forEach(conn => {
+                if (conn.open) conn.send(data);
+            });
+        }
+
+        function triggerNextEvent() {
+            if (!isHost) return;
+            currentEventIndex++;
+            if (currentEventIndex >= events.length) currentEventIndex = 0;
+            gameState.eventText = events[currentEventIndex];
+            broadcast({ type: 'SYNC', state: gameState });
+            renderMarket();
+        }
+
+        function sendMarketAction(field, val) {
+            if (isHost) {
+                processMarketLogic(field, val);
+                broadcast({ type: 'SYNC', state: gameState });
+                renderMarket();
+            } else {
+                if (connections[0] && connections[0].open) {
+                    connections[0].send({ type: 'ACTION', field: field, val: val });
+                }
+            }
+        }
+
+        function processMarketLogic(field, val) {
+            if (field === 'stock1') gameState.stock1 = Math.max(1, Math.min(8, gameState.stock1 + val));
+            else if (field === 'stock2') gameState.stock2 = Math.max(1, Math.min(8, gameState.stock2 + val));
+            else if (field === 'btc') gameState.btc = Math.max(0, gameState.btc + val);
+            else if (field === 'shit') gameState.shit = Math.max(0, gameState.shit + val);
+        }
+
+        function renderMarket() {
+            document.getElementById('event-text').innerText = gameState.eventText;
+
+            document.getElementById('stock1-count').innerText = gameState.stock1;
+            document.getElementById('stock1-card').innerText = "Карта в банке: №" + gameState.stock1;
+            document.getElementById('stock1-price').innerText = "Цена: " + (500 + (gameState.stock1 - 1) * 50);
+
+            document.getElementById('stock2-count').innerText = gameState.stock2;
+            document.getElementById('stock2-card').innerText = "Карта в банке: №" + gameState.stock2;
+            document.getElementById('stock2-price').innerText = "Цена: " + (600 + (gameState.stock2 - 1) * 60);
+
+            document.getElementById('btc-count').innerText = gameState.btc;
+            let btcOthers = Math.max(0, gameState.btc - 1);
+            document.getElementById('btc-price').innerText = "Цена: " + (1000 + (btcOthers * 300));
+
+            document.getElementById('shit-count').innerText = gameState.shit;
+            let shitOthers = Math.max(0, gameState.shit - 1);
+            document.getElementById('shit-count-info').innerText = "Цена: " + (100 + (shitOthers * 100));
+
+            calculateLocalTotal();
+        }
+
+        function updatePartyUI(forcedCount) {
+            let count = isHost ? (connections.length + 1) : forcedCount || 1;
+            let listHtml = `<span class="player-tag">Ты</span>`;
+            for (let i = 1; i < count; i++) {
+                listHtml += `<span class="player-tag">Игрок ${i + 1} 🟢</span>`;
+            }
+            document.getElementById('party-list').innerHTML = listHtml;
+        }
+
+        function copyRoomLink() {
+            const btn = document.getElementById('share-link-btn');
+            const link = btn.getAttribute('data-link');
+            
+            // Надежное мобильное копирование
+            const el = document.createElement('textarea');
+            el.value = link;
+            document.body.appendChild(el);
+            el.select();
+            document.execCommand('copy');
+            document.body.removeChild(el);
+
+            btn.innerText = "Ссылка скопирована! Отправляй 🚀";
+            setTimeout(() => { btn.innerText = "Скопировать инвайт-ссылку 🔗"; }, 2500);
+        }
+
+        function calculateLocalTotal() {
+            let cash = parseInt(document.getElementById('input-cash').value) || 0;
+            let assets = parseInt(document.getElementById('input-assets').value) || 0;
+            let total = cash + assets;
+
+            let output = document.getElementById('total-score');
+            if (total >= 40000) {
+                output.style.background = "#065f46";
+                output.innerText = "Капитал: " + total.toLocaleString('ru-RU') + " 🎉 ПОБЕДА!";
+            } else {
+                output.style.background = "#064e3b";
+                output.innerText = "Капитал: " + total.toLocaleString('ru-RU');
+            }
+        }
+    </script>
+</body>
+</html>
