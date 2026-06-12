@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Рыночный Хаос — С Системой Ников</title>
+    <title>Рыночный Хаос — Финал</title>
     
-    <!-- Децентрализованная сеть без блокировок -->
     <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
     
     <style>
@@ -16,7 +15,6 @@
             --accent: #3b82f6;
             --accent-glow: rgba(59, 130, 246, 0.3);
             --crypto: #f59e0b;
-            --crypto-glow: rgba(245, 158, 11, 0.2);
             --success: #10b981;
             --danger: #ef4444;
             --text: #f1f5f9;
@@ -45,7 +43,6 @@
             margin: 0 auto;
         }
 
-        /* Шапка игры */
         header {
             text-align: center;
             margin-bottom: 16px;
@@ -91,7 +88,7 @@
             padding-bottom: 6px;
         }
 
-        /* Системное окно ввода Ника */
+        /* Окно ввода ника */
         .modal-overlay {
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
@@ -110,7 +107,6 @@
             padding: 24px;
             border-radius: 20px;
             text-align: center;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.7);
         }
         .modal-content h3 {
             font-size: 18px;
@@ -135,9 +131,8 @@
             outline: none;
             margin-bottom: 14px;
         }
-        .nick-input:focus { border-color: var(--accent); }
 
-        /* Лобби-панель и Таблица игроков */
+        /* Лобби и игроки */
         .lobby-box {
             background: linear-gradient(135deg, #12132e, #151636);
             border-color: #312e81;
@@ -185,7 +180,7 @@
             text-align: center;
         }
 
-        /* События */
+        /* Новости */
         .event-display {
             background: rgba(30, 41, 59, 0.5);
             border-left: 4px solid var(--accent);
@@ -213,7 +208,7 @@
             box-shadow: 0 4px 12px var(--accent-glow);
         }
 
-        /* Игровой Рынок */
+        /* Рыночные позиции */
         .market-list { display: flex; flex-direction: column; gap: 10px; }
         .asset-row {
             display: flex;
@@ -258,14 +253,13 @@
         .trade-btn.sell { background: #991b1b; border: 1px solid #b91c1c; }
         .trade-btn.sell:disabled { background: #281c1c; border-color: #372525; color: #4b5563; cursor: not-allowed; }
 
-        /* Личный планшет игрока */
+        /* Планшет инвестора */
         .player-dashboard { background: #0d1527; border: 1px solid #1e3a8a; }
         .wallet-display { display: flex; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
         .wallet-card { flex: 1; background: #090d16; border: 1px solid var(--panel-border); padding: 10px; border-radius: 10px; text-align: center; }
         .wallet-card.total { border-color: var(--success); background: rgba(16, 185, 129, 0.03); }
         .wallet-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; font-weight: 700; margin-bottom: 2px; }
         .wallet-value { font-size: 16px; font-weight: 900; color: #fff; }
-        .wallet-card.total .wallet-value { color: var(--success); }
 
         .inventory-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
         .inv-cell { background: #090d16; border: 1px solid var(--panel-border); border-radius: 8px; padding: 6px; text-align: center; }
@@ -275,11 +269,10 @@
 </head>
 <body>
 
-<!-- ОКНО ВВОДА НИКА -->
 <div class="modal-overlay" id="nick-modal">
     <div class="modal-content">
         <h3>Вход на Крипто-Биржу</h3>
-        <p>Укажите свой игровой никнейм, чтобы друзья видели вас в таблице лидеров</p>
+        <p>Укажите игровой никнейм для таблицы лидеров</p>
         <input type="text" id="nick-field" class="nick-input" placeholder="Твой Ник" maxlength="14">
         <button class="action-btn" onclick="saveNickname()">Подключиться к сессии 🌐</button>
     </div>
@@ -291,37 +284,30 @@
         <div class="subtitle">Официальный Цифровой Симулятор</div>
     </header>
 
-    <!-- ИГРОВОЕ ЛОББИ И РЕЙТИНГ -->
     <div class="card lobby-box">
         <div class="card-title">
             <span>🏆 Таблица лидеров комнаты</span>
             <span class="net-status">P2P Активно</span>
         </div>
-        <div class="player-list" id="ui-players-list">
-            <!-- Список игроков будет рендериться здесь -->
-        </div>
+        <div class="player-list" id="ui-players-list"></div>
         <div id="link-area">
             <div class="invite-btn" id="share-btn" onclick="copySessionLink()">Скопировать инвайт-ссылку для друзей 🔗</div>
         </div>
     </div>
 
-    <!-- МИРОВЫЕ НОВОСТИ -->
     <div class="card">
         <div class="card-title">🔥 Событие раунда</div>
         <div class="event-display" id="event-box">Ожидание запуска игроков...</div>
         <button class="action-btn" onclick="nextRoundEvent()">Вытянуть карту события 🎲</button>
     </div>
 
-    <!-- ТОРГОВЫЙ РЫНОК -->
     <div class="card">
         <div class="card-title">📈 Глобальный стакан цен и Банк</div>
         <div class="market-list" id="market-render-root"></div>
     </div>
 
-    <!-- ЛИЧНЫЙ ПЛАНШЕТ ИГРОКА -->
     <div class="card player-dashboard">
         <div class="card-title">🏆 Ваш личный планшет инвестора</div>
-        
         <div class="wallet-display">
             <div class="wallet-card">
                 <div class="wallet-label">Доступный Кэш</div>
@@ -332,9 +318,8 @@
                 <div class="wallet-value" id="ui-total">10 000 $</div>
             </div>
         </div>
-
         <div class="card-title" style="border:none; margin-bottom: 6px;">📋 Активы в вашей руке (Инвентарь)</div>
-        <div class="inventory-grid" id="inventory-render-root"></div>
+        <div class="inventory-grid" id="inventory-root"></div>
     </div>
 </div>
 
@@ -346,257 +331,168 @@
         "💰 «Слив инсайда»: Все игроки, у которых сейчас НЕТ НИ ОДНОЙ карты крипты на столе, получают из банка по 1 000 валюты.",
         "💥 «Пузырь лопнул»: Та крипта, у которой сейчас САМАЯ ВЫСОКАЯ цена на столе, полностью обесценивается (сбрасывается в 0).",
         "💸 «Налог на роскошь»: Каждый игрок обязан заплатить в банк по 500 за каждую свою Карту №6, №7 или №8 в руке.",
-        "❄️ «Крипто-зима»: В этом раунде крипту нельзя продавать в банк. Можно только покупать новые карты из колоды рынка."
+        "❄️ «Крипто-зима»: В этом раунде крипту нельзя продавать в банк. Можно только покупать новые карты."
     ];
 
     const urlParams = new URLSearchParams(window.location.search);
-    let roomId = urlParams.get('room') || ('room_' + Math.random().toString(36).substr(2, 9));
+    let roomId = urlParams.get('room');
+    if (!roomId) {
+        roomId = 'room_' + Math.random().toString(36).substr(2, 9);
+        window.history.replaceState({}, '', window.location.pathname + '?room=' + roomId);
+    }
 
-    const gun = Gun(['https://gun-manhattan.herokuapp.com/gun', 'https://gundb-relay.up.railway.app/gun']);
-    const room = gun.get('kriptomania_chaos_v4').get(roomId);
+    const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
+    const room = gun.get('kriptomania_chaos_v9').get(roomId);
 
-    let myId = localStorage.getItem('km_user_id') || ('user_' + Math.random().toString(36).substr(2, 9));
-    localStorage.setItem('km_user_id', myId);
-    
-    let myNick = localStorage.getItem('km_user_nick') || "";
+    let myId = localStorage.getItem('km_id') || ('u_' + Math.random().toString(36).substr(2, 9));
+    localStorage.setItem('km_id', myId);
+    let myNick = localStorage.getItem('km_nick') || "";
 
-    let sharedState = {
-        stock1: 1, stock2: 1, stock3: 1, stock4: 1,
-        btc: 0, eth: 0, shit: 0,
-        eventText: "Игра готова к началу."
-    };
-
+    let sharedState = { stock1: 1, stock2: 1, stock3: 1, stock4: 1, btc: 0, eth: 0, shit: 0, eventText: "Игра готова." };
     let myPortfolio = { cash: 10000, stock1: 0, stock2: 0, stock3: 0, stock4: 0, btc: 0, eth: 0, shit: 0 };
     let allPlayers = {};
 
-    // Проверка ника при старте
     window.addEventListener('DOMContentLoaded', () => {
         if (myNick) {
             document.getElementById('nick-modal').style.display = 'none';
-            broadcastMyStatus();
+            sendPing();
         }
     });
 
     function saveNickname() {
         let input = document.getElementById('nick-field').value.trim();
-        if(!input) input = "Игрок_" + Math.floor(100 + Math.random() * 900);
-        myNick = input;
-        localStorage.setItem('km_user_nick', myNick);
+        myNick = input || "Игрок_" + Math.floor(100 + Math.random() * 900);
+        localStorage.setItem('km_nick', myNick);
         document.getElementById('nick-modal').style.display = 'none';
-        broadcastMyStatus();
+        sendPing();
     }
 
-    // Слушаем изменения рынка и игроков
     room.get('market').on((data) => {
         if (data) {
-            if (data.stock1 !== undefined) sharedState.stock1 = data.stock1;
-            if (data.stock2 !== undefined) sharedState.stock2 = data.stock2;
-            if (data.stock3 !== undefined) sharedState.stock3 = data.stock3;
-            if (data.stock4 !== undefined) sharedState.stock4 = data.stock4;
-            if (data.btc !== undefined) sharedState.btc = data.btc;
-            if (data.eth !== undefined) sharedState.eth = data.eth;
-            if (data.shit !== undefined) sharedState.shit = data.shit;
-            if (data.eventText !== undefined) sharedState.eventText = data.eventText;
-            updateGameEngine();
+            Object.keys(sharedState).forEach(k => { if(data[k] !== undefined) sharedState[k] = data[k]; });
+            updateEngine();
         }
     });
 
     room.get('players').map().on((pData, pId) => {
-        if (pData) {
-            // Если игрок долго не обновлялся — удаляем (проверка по таймстампу)
-            if (Date.now() - pData.lastSeen > 15000) {
-                room.get('players').get(pId).put(null);
-                delete allPlayers[pId];
-            } else {
-                allPlayers[pId] = pData;
-            }
-            renderLeaderboard();
-        }
+        if (pData) { allPlayers[pId] = pData; renderLeaderboard(); }
     });
 
-    // Пинг о том, что мы активны в сети (раз в 4 секунды)
-    setInterval(() => {
-        if(myNick) broadcastMyStatus();
-    }, 4000);
+    setInterval(() => { if(myNick) sendPing(); }, 2000);
 
-    function broadcastMyStatus() {
-        const prices = getCurrentPrices();
-        let assetsValue = 
-            (myPortfolio.stock1 * prices.stock1) + (myPortfolio.stock2 * prices.stock2) +
-            (myPortfolio.stock3 * prices.stock3) + (myPortfolio.stock4 * prices.stock4) +
-            (myPortfolio.btc * prices.btc) + (myPortfolio.eth * prices.eth) + (myPortfolio.shit * prices.shit);
-        
-        let cap = myPortfolio.cash + assetsValue;
-
-        room.get('players').get(myId).put({
-            nick: myNick,
-            cash: myPortfolio.cash,
-            total: cap,
-            lastSeen: Date.now()
-        });
+    function sendPing() {
+        const p = getCurrentPrices();
+        let cap = myPortfolio.cash + (myPortfolio.stock1*p.stock1) + (myPortfolio.stock2*p.stock2) + (myPortfolio.stock3*p.stock3) + (myPortfolio.stock4*p.stock4) + (myPortfolio.btc*p.btc) + (myPortfolio.eth*p.eth) + (myPortfolio.shit*p.shit);
+        room.get('players').get(myId).put({ nick: myNick, cash: myPortfolio.cash, total: cap, time: Date.now() });
     }
-
-    const inviteLink = window.location.origin + window.location.pathname + "?room=" + roomId;
-    document.getElementById('share-btn').setAttribute('data-link', inviteLink);
 
     function getCurrentPrices() {
         return {
-            stock1: 500 + (sharedState.stock1 - 1) * 50,
-            stock2: 600 + (sharedState.stock2 - 1) * 60,
-            stock3: 700 + (sharedState.stock3 - 1) * 70,
-            stock4: 800 + (sharedState.stock4 - 1) * 80,
-            btc: 1000 + (sharedState.btc * 300),
-            eth: 500 + (sharedState.eth * 150),
-            shit: 100 + (sharedState.shit * 100)
+            stock1: 500 + (sharedState.stock1 - 1) * 50, stock2: 600 + (sharedState.stock2 - 1) * 60,
+            stock3: 700 + (sharedState.stock3 - 1) * 70, stock4: 800 + (sharedState.stock4 - 1) * 80,
+            btc: 1000 + (sharedState.btc * 300), eth: 500 + (sharedState.eth * 150), shit: 100 + (sharedState.shit * 100)
         };
     }
 
     function changeMarketParam(field, delta) {
-        let current = sharedState[field];
-        let next = current + delta;
-        if (field.startsWith('stock')) { if (next < 1 || next > 8) return; }
-        else { if (next < 0) return; }
-        let update = {}; update[field] = next;
-        room.get('market').put(update);
+        let next = sharedState[field] + delta;
+        if (field.startsWith('stock') ? (next >= 1 && next <= 8) : (next >= 0)) {
+            let u = {}; u[field] = next; room.get('market').put(u);
+        }
     }
 
     function buyAsset(key) {
-        const prices = getCurrentPrices();
-        const cost = prices[key];
+        const cost = getCurrentPrices()[key];
         if (myPortfolio.cash >= cost) {
-            myPortfolio.cash -= cost;
-            myPortfolio[key]++;
-            if (!key.startsWith('stock')) {
-                let update = {}; update[key] = sharedState[key] + 1;
-                room.get('market').put(update);
-            }
-            broadcastMyStatus();
-            updateGameEngine();
+            myPortfolio.cash -= cost; myPortfolio[key]++;
+            if (!key.startsWith('stock')) { let u = {}; u[key] = sharedState[key] + 1; room.get('market').put(u); }
+            sendPing(); updateEngine();
         }
     }
 
     function sellAsset(key) {
         if (myPortfolio[key] > 0) {
-            const prices = getCurrentPrices();
-            const profit = prices[key];
-            myPortfolio[key]--;
-            myPortfolio.cash += profit;
-            if (!key.startsWith('stock') && sharedState[key] > 0) {
-                let update = {}; update[key] = sharedState[key] - 1;
-                room.get('market').put(update);
-            }
-            broadcastMyStatus();
-            updateGameEngine();
+            myPortfolio[key]--; myPortfolio.cash += getCurrentPrices()[key];
+            if (!key.startsWith('stock') && sharedState[key] > 0) { let u = {}; u[key] = sharedState[key] - 1; room.get('market').put(u); }
+            sendPing(); updateEngine();
         }
     }
 
     function nextRoundEvent() {
-        const idx = Math.floor(Math.random() * events.length);
-        room.get('market').put({ eventText: events[idx] });
+        room.get('market').put({ eventText: events[Math.floor(Math.random() * events.length)] });
     }
 
     function renderLeaderboard() {
-        let sorted = Object.keys(allPlayers)
-            .map(id => allPlayers[id])
-            .filter(p => Date.now() - p.lastSeen < 20000) // убираем оффлайнщиков
-            .sort((a, b) => b.total - a.total);
-
-        let html = '';
-        sorted.forEach(p => {
-            const isMe = p.nick === myNick;
-            html += `
-                <div class="player-row">
-                    <span class="p-name ${isMe ? 'it-me' : ''}">${p.nick}</span>
-                    <span class="p-stats"><span>Кэш: ${p.cash.toLocaleString()}$ |</span> ${p.total.toLocaleString()} $</span>
-                </div>
-            `;
-        });
-        document.getElementById('ui-players-list').innerHTML = html || '<div style="font-size:12px; color:var(--text-muted); text-align:center;">Ожидание игроков...</div>';
+        let now = Date.now();
+        let sorted = Object.keys(allPlayers).map(id => allPlayers[id]).filter(p => (now - p.time) < 10000).sort((a,b) => b.total - a.total);
+        document.getElementById('ui-players-list').innerHTML = sorted.map(p => `
+            <div class="player-row">
+                <span class="p-name ${p.nick === myNick ? 'it-me' : ''}">${p.nick}</span>
+                <span class="p-stats"><span>Кэш: ${p.cash}$ |</span> ${p.total}$</span>
+            </div>
+        `).join('') || '<div style="font-size:12px; color:var(--text-muted); text-align:center;">Ожидание игроков...</div>';
     }
 
-    function updateGameEngine() {
-        const prices = getCurrentPrices();
+    function updateEngine() {
+        const p = getCurrentPrices();
         document.getElementById('event-box').innerText = sharedState.eventText;
 
         const marketData = [
-            { key: 'stock1', name: 'Компания 1 (Сырьё)', type: 'stock', desc: `Верхняя карта в Банке: №${sharedState.stock1}`, price: prices.stock1, val: sharedState.stock1 },
-            { key: 'stock2', name: 'Компания 2 (IT-Сектор)', type: 'stock', desc: `Верхняя карта в Банке: №${sharedState.stock2}`, price: prices.stock2, val: sharedState.stock2 },
-            { key: 'stock3', name: 'Компания 3 (Нефть/Газ)', type: 'stock', desc: `Верхняя карта в Банке: №${sharedState.stock3}`, price: prices.stock3, val: sharedState.stock3 },
-            { key: 'stock4', name: 'Компания 4 (Космотех)', type: 'stock', desc: `Верхняя карта в Банке: №${sharedState.stock4}`, price: prices.stock4, val: sharedState.stock4 },
-            { key: 'btc', name: 'Bitcoin 🪙', type: 'crypto', desc: `Всего карт на общем столе: ${sharedState.btc}`, price: prices.btc, val: sharedState.btc },
-            { key: 'eth', name: 'Ethereum 💎', type: 'crypto', desc: `Всего карт на общем столе: ${sharedState.eth}`, price: prices.eth, val: sharedState.eth },
-            { key: 'shit', name: 'Щиткоин 💩', type: 'crypto', desc: `Всего карт на общем столе: ${sharedState.shit}`, price: prices.shit, val: sharedState.shit }
+            { key: 'stock1', name: 'Компания 1 (Сырьё)', type: 'stock', desc: `В Банке: №${sharedState.stock1}`, price: p.stock1, val: sharedState.stock1 },
+            { key: 'stock2', name: 'Компания 2 (IT)', type: 'stock', desc: `В Банке: №${sharedState.stock2}`, price: p.stock2, val: sharedState.stock2 },
+            { key: 'stock3', name: 'Компания 3 (Нефть)', type: 'stock', desc: `В Банке: №${sharedState.stock3}`, price: p.stock3, val: sharedState.stock3 },
+            { key: 'stock4', name: 'Компания 4 (Космос)', type: 'stock', desc: `В Банке: №${sharedState.stock4}`, price: p.stock4, val: sharedState.stock4 },
+            { key: 'btc', name: 'Bitcoin 🪙', type: 'crypto', desc: `На столе: ${sharedState.btc} шт`, price: p.btc, val: sharedState.btc },
+            { key: 'eth', name: 'Ethereum 💎', type: 'crypto', desc: `На столе: ${sharedState.eth} шт`, price: p.eth, val: sharedState.eth },
+            { key: 'shit', name: 'Щиткоин 💩', type: 'crypto', desc: `На столе: ${sharedState.shit} шт`, price: p.shit, val: sharedState.shit }
         ];
 
-        let marketHtml = '';
-        marketData.forEach(item => {
-            const canBuy = myPortfolio.cash >= item.price;
-            const canSell = myPortfolio[item.key] > 0;
-            const isStock = item.type === 'stock';
-
-            marketHtml += `
-                <div class="asset-row ${isStock ? 'stock-type' : 'crypto-type'}">
-                    <div class="asset-info">
-                        <span class="asset-name">${item.name}</span>
-                        <span class="asset-details">${item.desc}</span>
-                        <span class="asset-price">${item.price.toLocaleString()} $</span>
+        document.getElementById('market-render-root').innerHTML = marketData.map(item => `
+            <div class="asset-row ${item.type === 'stock' ? 'stock-type' : 'crypto-type'}">
+                <div class="asset-info">
+                    <span class="asset-name">${item.name}</span>
+                    <span class="asset-details">${item.desc}</span>
+                    <span class="asset-price">${item.price}$</span>
+                </div>
+                <div class="controls-group">
+                    <div class="price-wheel">
+                        <button class="wheel-btn" onclick="changeMarketParam('${item.key}', -1)">−</button>
+                        <span class="wheel-value">${item.type === 'stock' ? '№' + item.val : item.val}</span>
+                        <button class="wheel-btn" onclick="changeMarketParam('${item.key}', 1)">+</button>
                     </div>
-                    <div class="controls-group">
-                        <div class="price-wheel">
-                            <button class="wheel-btn" onclick="changeMarketParam('${item.key}', -1)">−</button>
-                            <span class="wheel-value">${isStock ? '№' + item.val : item.val + ' шт'}</span>
-                            <button class="wheel-btn" onclick="changeMarketParam('${item.key}', 1)">+</button>
-                        </div>
-                        <div class="trade-actions">
-                            <button class="trade-btn buy" ${canBuy ? '' : 'disabled'} onclick="buyAsset('${item.key}')">Купить</button>
-                            <button class="trade-btn sell" ${canSell ? '' : 'disabled'} onclick="sellAsset('${item.key}')">Сдать</button>
-                        </div>
+                    <div class="trade-actions">
+                        <button class="trade-btn buy" ${myPortfolio.cash >= item.price ? '' : 'disabled'} onclick="buyAsset('${item.key}')">Купить</button>
+                        <button class="trade-btn sell" ${myPortfolio[item.key] > 0 ? '' : 'disabled'} onclick="sellAsset('${item.key}')">Сдать</button>
                     </div>
                 </div>
-            `;
-        });
-        document.getElementById('market-render-root').innerHTML = marketHtml;
+            </div>
+        `).join('');
 
-        let totalAssetsValue = 
-            (myPortfolio.stock1 * prices.stock1) + (myPortfolio.stock2 * prices.stock2) +
-            (myPortfolio.stock3 * prices.stock3) + (myPortfolio.stock4 * prices.stock4) +
-            (myPortfolio.btc * prices.btc) + (myPortfolio.eth * prices.eth) + (myPortfolio.shit * prices.shit);
-
-        let finalCapital = myPortfolio.cash + totalAssetsValue;
-
+        let cap = myPortfolio.cash + (myPortfolio.stock1*p.stock1) + (myPortfolio.stock2*p.stock2) + (myPortfolio.stock3*p.stock3) + (myPortfolio.stock4*p.stock4) + (myPortfolio.btc*p.btc) + (myPortfolio.eth*p.eth) + (myPortfolio.shit*p.shit);
         document.getElementById('ui-cash').innerText = myPortfolio.cash.toLocaleString() + " $";
+        
         const totalUi = document.getElementById('ui-total');
-        if (finalCapital >= 40000) {
-            totalUi.style.color = '#10b981';
-            totalUi.innerText = finalCapital.toLocaleString() + " $ 👑 ПОБЕДА!";
-        } else {
-            totalUi.style.color = '#fff';
-            totalUi.innerText = finalCapital.toLocaleString() + " $";
-        }
+        totalUi.style.color = cap >= 40000 ? '#10b981' : '#fff';
+        totalUi.innerText = cap.toLocaleString() + (cap >= 40000 ? " $ 👑 ПОБЕДА!" : " $");
 
         const invData = [
             { name: 'Комп. 1', count: myPortfolio.stock1 }, { name: 'Комп. 2', count: myPortfolio.stock2 },
             { name: 'Комп. 3', count: myPortfolio.stock3 }, { name: 'Комп. 4', count: myPortfolio.stock4 },
             { name: 'BTC', count: myPortfolio.btc }, { name: 'ETH', count: myPortfolio.eth }, { name: 'SHIT', count: myPortfolio.shit }
         ];
-
-        let invHtml = '';
-        invData.forEach(cell => {
-            invHtml += `<div class="inv-cell"><span class="inv-name">${cell.name}</span><span class="inv-count">${cell.count}</span></div>`;
-        });
-        document.getElementById('inventory-render-root').innerHTML = invHtml;
+        document.getElementById('inventory-root').innerHTML = invData.map(c => `<div class="inv-cell"><span class="inv-name">${c.name}</span><span class="inv-count">${c.count}</span></div>`).join('');
     }
 
     function copySessionLink() {
         const btn = document.getElementById('share-btn');
-        const link = btn.getAttribute('data-link');
         const el = document.createElement('textarea');
-        el.value = link; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el);
-        btn.innerText = "Ссылка скопирована! Пересылай 🚀";
+        el.value = window.location.origin + window.location.pathname + "?room=" + roomId;
+        document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el);
+        btn.innerText = "Ссылка скопирована! 🚀";
         setTimeout(() => { btn.innerText = "Скопировать инвайт-ссылку для друзей 🔗"; }, 3000);
     }
 
-    updateGameEngine();
+    updateEngine();
 </script>
 </body>
 </html>
