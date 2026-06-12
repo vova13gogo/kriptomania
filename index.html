@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Рыночный Хаос — Бесперебойный</title>
+    <title>Рыночный Хаос — На Одно Устройство</title>
     
     <style>
         :root {
@@ -45,7 +45,6 @@
         header h1 {
             font-size: 24px;
             font-weight: 900;
-            letter-spacing: -0.5px;
             background: linear-gradient(135deg, #fff 40%, var(--accent));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
@@ -56,7 +55,6 @@
             margin-top: 4px;
             font-weight: 600;
             text-transform: uppercase;
-            letter-spacing: 1px;
         }
 
         .card {
@@ -65,7 +63,6 @@
             border-radius: 16px;
             padding: 14px;
             margin-bottom: 12px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
         }
 
         .card-title {
@@ -73,7 +70,6 @@
             font-weight: 800;
             color: #94a3b8;
             text-transform: uppercase;
-            letter-spacing: 0.8px;
             margin-bottom: 12px;
             display: flex;
             justify-content: space-between;
@@ -82,11 +78,11 @@
             padding-bottom: 6px;
         }
 
-        /* Окно ввода ника */
+        /* Окно настройки игроков */
         .modal-overlay {
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(11, 15, 25, 0.95);
+            background: rgba(11, 15, 25, 0.98);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -102,79 +98,57 @@
             border-radius: 20px;
             text-align: center;
         }
-        .modal-content h3 {
-            font-size: 18px;
-            margin-bottom: 8px;
-            font-weight: 800;
-        }
-        .modal-content p {
-            font-size: 13px;
-            color: var(--text-muted);
-            margin-bottom: 16px;
-        }
+        .modal-content h3 { font-size: 18px; margin-bottom: 12px; font-weight: 800; }
         .nick-input {
             width: 100%;
             background: #0e131f;
             border: 1px solid var(--panel-border);
-            padding: 14px;
+            padding: 12px;
             border-radius: 12px;
             color: #fff;
-            font-size: 15px;
+            font-size: 14px;
             font-weight: 700;
             text-align: center;
             outline: none;
-            margin-bottom: 14px;
-        }
-
-        /* Лобби */
-        .lobby-box {
-            background: linear-gradient(135deg, #12132e, #151636);
-            border-color: #312e81;
-        }
-        .net-status {
-            font-size: 11px;
-            background: #064e3b;
-            color: #34d399;
-            padding: 2px 8px;
-            border-radius: 20px;
-            font-weight: 700;
-        }
-        .player-list {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
             margin-bottom: 10px;
         }
-        .player-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: rgba(9, 13, 22, 0.6);
-            padding: 8px 12px;
-            border-radius: 10px;
-            border: 1px solid rgba(255,255,255,0.03);
-            font-size: 13px;
-        }
-        .p-name { font-weight: 700; color: #fff; }
-        .p-name.it-me { color: #60a5fa; }
-        .p-name.it-me::after { content: " (Вы)"; font-size: 10px; color: var(--text-muted); }
-        .p-stats { font-weight: 800; color: var(--success); font-size: 12px; }
-        .p-stats span { color: var(--text-muted); font-weight: 500; font-size: 11px; margin-right: 4px; }
 
-        .invite-btn {
-            width: 100%;
-            background: rgba(99, 102, 241, 0.1);
-            border: 1px dashed #6366f1;
-            color: #a5b4fc;
-            padding: 10px;
-            border-radius: 10px;
-            font-size: 12px;
-            font-weight: 700;
-            cursor: pointer;
+        /* Переключатель игроков */
+        .turn-box {
+            background: linear-gradient(135deg, #1e1b4b, #311042);
+            border-color: #4c1d95;
             text-align: center;
         }
+        .current-player-title {
+            font-size: 20px;
+            font-weight: 900;
+            color: #a78bfa;
+            margin-bottom: 4px;
+        }
 
-        /* События */
+        .player-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        .tab-btn {
+            flex: 1;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--panel-border);
+            color: var(--text-muted);
+            padding: 8px;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        .tab-btn.active {
+            background: #4c1d95;
+            border-color: #8b5cf6;
+            color: #fff;
+        }
+
+        /* Общие стили рынка */
         .event-display {
             background: rgba(30, 41, 59, 0.5);
             border-left: 4px solid var(--accent);
@@ -182,8 +156,6 @@
             border-radius: 0 12px 12px 0;
             font-size: 13px;
             font-weight: 600;
-            line-height: 1.5;
-            color: #e2e8f0;
             min-height: 54px;
             display: flex;
             align-items: center;
@@ -199,10 +171,8 @@
             font-weight: 800;
             cursor: pointer;
             margin-top: 10px;
-            box-shadow: 0 4px 12px var(--accent-glow);
         }
 
-        /* Рыночные позиции */
         .market-list { display: flex; flex-direction: column; gap: 10px; }
         .asset-row {
             display: flex;
@@ -218,8 +188,8 @@
         
         .asset-info { display: flex; flex-direction: column; gap: 2px; flex: 1; }
         .asset-name { font-size: 14px; font-weight: 800; color: #fff; }
-        .asset-details { font-size: 11px; color: var(--text-muted); font-weight: 500; }
-        .asset-price { font-size: 15px; font-weight: 800; color: #facc15; margin-top: 2px; }
+        .asset-details { font-size: 11px; color: var(--text-muted); }
+        .asset-price { font-size: 15px; font-weight: 800; color: #facc15; }
 
         .controls-group { display: flex; align-items: center; gap: 12px; }
         .price-wheel {
@@ -242,77 +212,74 @@
             border: none; color: #fff; padding: 8px 12px; border-radius: 10px;
             font-size: 11px; font-weight: 800; cursor: pointer; text-transform: uppercase;
         }
-        .trade-btn.buy { background: #065f46; border: 1px solid #047857; }
-        .trade-btn.buy:disabled { background: #1c2521; border-color: #27302c; color: #4b5563; cursor: not-allowed; }
-        .trade-btn.sell { background: #991b1b; border: 1px solid #b91c1c; }
-        .trade-btn.sell:disabled { background: #281c1c; border-color: #372525; color: #4b5563; cursor: not-allowed; }
+        .trade-btn.buy { background: #065f46; }
+        .trade-btn.buy:disabled { background: #1c2521; color: #4b5563; cursor: not-allowed; }
+        .trade-btn.sell { background: #991b1b; }
+        .trade-btn.sell:disabled { background: #281c1c; color: #4b5563; cursor: not-allowed; }
 
         /* Планшет инвестора */
         .player-dashboard { background: #0d1527; border: 1px solid #1e3a8a; }
         .wallet-display { display: flex; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
         .wallet-card { flex: 1; background: #090d16; border: 1px solid var(--panel-border); padding: 10px; border-radius: 10px; text-align: center; }
         .wallet-card.total { border-color: var(--success); background: rgba(16, 185, 129, 0.03); }
-        .wallet-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; font-weight: 700; margin-bottom: 2px; }
+        .wallet-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; }
         .wallet-value { font-size: 16px; font-weight: 900; color: #fff; }
 
         .inventory-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
         .inv-cell { background: #090d16; border: 1px solid var(--panel-border); border-radius: 8px; padding: 6px; text-align: center; }
-        .inv-name { font-size: 9px; color: var(--text-muted); font-weight: 700; text-transform: uppercase; display: block; margin-bottom: 2px; }
+        .inv-name { font-size: 9px; color: var(--text-muted); text-transform: uppercase; }
         .inv-count { font-size: 15px; font-weight: 800; color: #fff; }
     </style>
 </head>
 <body>
 
-<div class="modal-overlay" id="nick-modal">
+<div class="modal-overlay" id="setup-modal">
     <div class="modal-content">
-        <h3>Вход на Крипто-Биржу</h3>
-        <p>Укажите игровой никнейм для таблицы лидеров</p>
-        <input type="text" id="nick-field" class="nick-input" placeholder="Твой Ник" maxlength="14">
-        <button class="action-btn" onclick="saveNickname()">Подключиться к сессии 🌐</button>
+        <h3>Настройка игры локально 🛋️</h3>
+        <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 14px;">Играйте вдвоем на одном экране по очереди!</p>
+        <input type="text" id="p1-name-field" class="nick-input" value="Вова">
+        <input type="text" id="p2-name-field" class="nick-input" value="Макс">
+        <button class="action-btn" onclick="startLocalGame()">Запустить Настолку 🚀</button>
     </div>
 </div>
 
 <div class="app-container">
     <header>
         <h1>РЫНОЧНЫЙ ХАОС</h1>
-        <div class="subtitle">Официальный Цифровой Симулятор</div>
+        <div class="subtitle">Локальная цифровая настолка</div>
     </header>
 
-    <div class="card lobby-box">
-        <div class="card-title">
-            <span>🏆 Ваша игровая пати</span>
-            <span class="net-status" style="background:#2563eb;" id="net-indicator">HTTP Связь</span>
-        </div>
-        <div class="player-list" id="ui-players-list"></div>
-        <div id="link-area">
-            <div class="invite-btn" id="share-btn" onclick="copySessionLink()">Скопировать инвайт-ссылку для друзей 🔗</div>
-        </div>
+    <div class="card turn-box">
+        <div class="card-title"><span>👤 Чей сейчас ход?</span></div>
+        <div class="current-player-title" id="active-player-name">Загрузка...</div>
+        <p style="font-size: 11px; color: #c084fc; margin-bottom: 12px;">Сделайте действия и передайте телефон другу</p>
+        <div class="player-tabs" id="player-tabs-root"></div>
     </div>
 
     <div class="card">
-        <div class="card-title">🔥 Событие раунда</div>
-        <div class="event-display" id="event-box">Игра готова к старту.</div>
-        <button class="action-btn" onclick="nextRoundEvent()">Вытянуть карту события 🎲</button>
+        <div class="card-title">🔥 Событие текущего раунда</div>
+        <div class="event-display" id="event-box">Вытяните карту события в начале раунда!</div>
+        <button class="action-btn" style="background:#5b21b6;" onclick="nextRoundEvent()">Вытянуть карту события 🎲</button>
     </div>
 
     <div class="card">
-        <div class="card-title">📈 Глобальный стакан цен и Банк</div>
+        <div class="card-title">📈 Общий банк карт и регулятор цен</div>
         <div class="market-list" id="market-render-root"></div>
     </div>
 
     <div class="card player-dashboard">
-        <div class="card-title">🏆 Ваш личный планшет инвестора</div>
+        <div class="card-title" id="dashboard-user-title">Планшет инвестора</div>
         <div class="wallet-display">
             <div class="wallet-card">
-                <div class="wallet-label">Доступный Кэш</div>
+                <div class="wallet-label">Наличка (Кэш)</div>
                 <div class="wallet-value" id="ui-cash">10 000 $</div>
             </div>
             <div class="wallet-card total">
-                <div class="wallet-label">Весь Капитал (Цель: 40к)</div>
+                <div class="wallet-label">Общий Капитал</div>
                 <div class="wallet-value" id="ui-total">10 000 $</div>
             </div>
         </div>
-        <div class="card-title" style="border:none; margin-bottom: 6px;">📋 Активы в вашей руке (Инвентарь)</div>
+        <div class="card-title" style="border:none; margin-bottom: 6px;">📋 Карты в руке игрока</div>
         <div class="inventory-grid" id="inventory-render-root"></div>
     </div>
 </div>
@@ -328,201 +295,109 @@
         "❄️ «Крипто-зима»: В этом раунде крипту нельзя продавать в банк. Можно только покупать новые карты."
     ];
 
-    const urlParams = new URLSearchParams(window.location.search);
-    let roomId = urlParams.get('room');
-    if (!roomId) {
-        roomId = 'rm_' + Math.random().toString(36).substr(2, 7);
-        window.history.replaceState({}, '', window.location.pathname + '?room=' + roomId);
+    // Глобальное состояние игры в оперативной памяти (работает без интернета мгновенно!)
+    let marketState = { stock1: 1, stock2: 1, stock3: 1, stock4: 1, btc: 0, eth: 0, shit: 0, eventText: "Начало партии. Нажмите карту события!" };
+    let players = {};
+    let activePlayerId = 'p1';
+
+    function startLocalGame() {
+        let n1 = document.getElementById('p1-name-field').value.trim() || "Игрок 1";
+        let n2 = document.getElementById('p2-name-field').value.trim() || "Игрок 2";
+
+        players = {
+            p1: { name: n1, cash: 10000, stock1: 0, stock2: 0, stock3: 0, stock4: 0, btc: 0, eth: 0, shit: 0 },
+            p2: { name: n2, cash: 10000, stock1: 0, stock2: 0, stock3: 0, stock4: 0, btc: 0, eth: 0, shit: 0 }
+        };
+
+        document.getElementById('setup-modal').style.display = 'none';
+        buildTabs();
+        switchPlayer('p1');
     }
 
-    let myId = localStorage.getItem('km_uid') || ('u_' + Math.random().toString(36).substr(2, 7));
-    localStorage.setItem('km_uid', myId);
-    let myNick = localStorage.getItem('km_nick') || "";
-
-    // Локальное независимое состояние (HTTP-режим)
-    let sharedState = { stock1: 1, stock2: 1, stock3: 1, stock4: 1, btc: 0, eth: 0, shit: 0, eventText: "Игра началась!" };
-    let myPortfolio = { cash: 10000, stock1: 0, stock2: 0, stock3: 0, stock4: 0, btc: 0, eth: 0, shit: 0 };
-    let allPlayers = {};
-
-    window.addEventListener('DOMContentLoaded', () => {
-        if (myNick) {
-            document.getElementById('nick-modal').style.display = 'none';
-            initNetwork();
-        }
-    });
-
-    function saveNickname() {
-        let input = document.getElementById('nick-field').value.trim();
-        myNick = input || "Игрок_" + Math.floor(100 + Math.random() * 900);
-        localStorage.setItem('km_nick', myNick);
-        document.getElementById('nick-modal').style.display = 'none';
-        initNetwork();
+    function buildTabs() {
+        document.getElementById('player-tabs-root').innerHTML = Object.keys(players).map(id => `
+            <button class="tab-btn" id="tab-${id}" onclick="switchPlayer('${id}')">Планшет ${players[id].name}</button>
+        `).join('');
     }
 
-    // Абсолютно чистый HTTP-обмен через защищенный REST API счетчик (без WebSockets)
-    async function apiExchange(action, key, value = 1) {
-        try {
-            const elId = `km_${roomId}_${key}`;
-            let url = `https://api.countapi.xyz/hit/kriptomania/${elId}`;
-            
-            if (action === 'set') {
-                url = `https://api.countapi.xyz/set/kriptomania/${elId}?value=${value}`;
-            } else if (action === 'get') {
-                url = `https://api.countapi.xyz/get/kriptomania/${elId}`;
-            }
-
-            let res = await fetch(url);
-            if (res.ok) {
-                let d = await res.json();
-                return d.value || 0;
-            }
-        } catch (e) {}
-        return null;
-    }
-
-    // Кастомный сетевой стек поверх обычных HTTP запросов
-    async function syncNetwork() {
-        const keys = ['stock1', 'stock2', 'stock3', 'stock4', 'btc', 'eth', 'shit'];
-        
-        // Отправляем свой пинг активности
-        const prices = getCurrentPrices();
-        let cap = myPortfolio.cash + (myPortfolio.stock1*prices.stock1) + (myPortfolio.stock2*prices.stock2) + (myPortfolio.stock3*prices.stock3) + (myPortfolio.stock4*prices.stock4) + (myPortfolio.btc*prices.btc) + (myPortfolio.eth*prices.eth) + (myPortfolio.shit*prices.shit);
-        
-        try {
-            // Запись наших параметров в облачный реестр через Fetch
-            await fetch(`https://api.countapi.xyz/set/kriptomania/p_${roomId}_${myId}_cash?value=${myPortfolio.cash}`);
-            await fetch(`https://api.countapi.xyz/set/kriptomania/p_${roomId}_${myId}_total?value=${cap}`);
-            await fetch(`https://api.countapi.xyz/set/kriptomania/p_${roomId}_${myId}_tick?value=${Math.floor(Date.now()/1000)}`);
-            
-            // Запоминаем имя локально
-            localStorage.setItem(`nick_${roomId}_${myId}`, myNick);
-
-            // Читаем глобальное состояние рынка
-            for (let k of keys) {
-                let res = await fetch(`https://api.countapi.xyz/get/kriptomania/km_${roomId}_${k}`);
-                if (res.ok) {
-                    let d = await res.json();
-                    if (d.value !== undefined) {
-                        if (k.startsWith('stock') && d.value < 1) d.value = 1;
-                        sharedState[k] = d.value;
-                    }
-                }
-            }
-            
-            // Симулируем текстовые события через синхронизацию индекса
-            let evRes = await fetch(`https://api.countapi.xyz/get/kriptomania/km_${roomId}_evidx`);
-            if (evRes.ok) {
-                let evD = await evRes.json();
-                if (evD.value !== undefined) sharedState.eventText = events[evD.value % events.length];
-            }
-
-            document.getElementById('net-indicator').innerText = "HTTP Стабилен";
-            document.getElementById('net-indicator').style.background = "#10b981";
-        } catch (e) {}
-
-        // Рендерим лобби из локального кэша и активных сессий
-        allPlayers[myId] = { nick: myNick, cash: myPortfolio.cash, total: cap };
-        renderLeaderboard();
+    function switchPlayer(id) {
+        activePlayerId = id;
+        Object.keys(players).forEach(pId => {
+            document.getElementById(`tab-${pId}`).classList.toggle('active', pId === id);
+        });
+        document.getElementById('active-player-name').innerText = `👉 Экран игрока: ${players[id].name}`;
+        document.getElementById('dashboard-user-title').innerText = `🏆 Планшет инвестора: ${players[id].name}`;
         updateGameEngine();
-    }
-
-    function initNetwork() {
-        // Первичная инициализация базовых цен, если в комнате пусто
-        const keys = ['stock1', 'stock2', 'stock3', 'stock4'];
-        keys.forEach(k => { apiExchange('set', k, 1); });
-        
-        syncNetwork();
-        setInterval(syncNetwork, 3500); // Каждые 3.5 секунды качаем обновления рынка
     }
 
     function getCurrentPrices() {
         return {
-            stock1: 500 + (sharedState.stock1 - 1) * 50,
-            stock2: 600 + (sharedState.stock2 - 1) * 60,
-            stock3: 700 + (sharedState.stock3 - 1) * 70,
-            stock4: 800 + (sharedState.stock4 - 1) * 80,
-            btc: 1000 + (sharedState.btc * 300),
-            eth: 500 + (sharedState.eth * 150),
-            shit: 100 + (sharedState.shit * 100)
+            stock1: 500 + (marketState.stock1 - 1) * 50,
+            stock2: 600 + (marketState.stock2 - 1) * 60,
+            stock3: 700 + (marketState.stock3 - 1) * 70,
+            stock4: 800 + (marketState.stock4 - 1) * 80,
+            btc: 1000 + (marketState.btc * 300),
+            eth: 500 + (marketState.eth * 150),
+            shit: 100 + (marketState.shit * 100)
         };
     }
 
-    async function changeMarketParam(field, delta) {
-        let next = sharedState[field] + delta;
+    function changeMarketParam(field, delta) {
+        let next = marketState[field] + delta;
         if (field.startsWith('stock') ? (next >= 1 && next <= 8) : (next >= 0)) {
-            sharedState[field] = next;
-            await apiExchange('set', field, next);
+            marketState[field] = next;
             updateGameEngine();
         }
     }
 
-    async function buyAsset(key) {
+    function buyAsset(key) {
+        let p = players[activePlayerId];
         const prices = getCurrentPrices();
         const cost = prices[key];
-        if (myPortfolio.cash >= cost) {
-            myPortfolio.cash -= cost;
-            myPortfolio[key]++;
-            if (!key.startsWith('stock')) {
-                sharedState[key]++;
-                await apiExchange('set', key, sharedState[key]);
-            }
+        if (p.cash >= cost) {
+            p.cash -= cost;
+            p[key]++;
+            if (!key.startsWith('stock')) marketState[key]++;
             updateGameEngine();
         }
     }
 
-    async function sellAsset(key) {
-        if (myPortfolio[key] > 0) {
+    function sellAsset(key) {
+        let p = players[activePlayerId];
+        if (p[key] > 0) {
             const prices = getCurrentPrices();
-            myPortfolio[key]--;
-            myPortfolio.cash += prices[key];
-            if (!key.startsWith('stock') && sharedState[key] > 0) {
-                sharedState[key]--;
-                await apiExchange('set', key, sharedState[key]);
-            }
+            p[key]--;
+            p.cash += prices[key];
+            if (!key.startsWith('stock') && marketState[key] > 0) marketState[key]--;
             updateGameEngine();
         }
     }
 
-    async function nextRoundEvent() {
-        let currentIdx = Math.floor(Math.random() * events.length);
-        sharedState.eventText = events[currentIdx];
-        await apiExchange('set', 'evidx', currentIdx);
+    function nextRoundEvent() {
+        marketState.eventText = events[Math.floor(Math.random() * events.length)];
         updateGameEngine();
-    }
-
-    function renderLeaderboard() {
-        let html = '';
-        Object.keys(allPlayers).forEach(id => {
-            const p = allPlayers[id];
-            const isMe = id === myId;
-            html += `
-                <div class="player-row">
-                    <span class="p-name ${isMe ? 'it-me' : ''}">${p.nick}</span>
-                    <span class="p-stats"><span>Кэш: ${p.cash.toLocaleString()}$ |</span> ${p.total.toLocaleString()} $</span>
-                </div>
-            `;
-        });
-        document.getElementById('ui-players-list').innerHTML = html;
     }
 
     function updateGameEngine() {
         const prices = getCurrentPrices();
-        document.getElementById('event-box').innerText = sharedState.eventText;
+        document.getElementById('event-box').innerText = marketState.eventText;
 
         const marketData = [
-            { key: 'stock1', name: 'Компания 1 (Сырьё)', type: 'stock', desc: `Верхняя карта в Банке: №${sharedState.stock1}`, price: prices.stock1, val: sharedState.stock1 },
-            { key: 'stock2', name: 'Компания 2 (IT-Сектор)', type: 'stock', desc: `Верхняя карта в Банке: №${sharedState.stock2}`, price: prices.stock2, val: sharedState.stock2 },
-            { key: 'stock3', name: 'Компания 3 (Нефть/Газ)', type: 'stock', desc: `Верхняя карта в Банке: №${sharedState.stock3}`, price: prices.stock3, val: sharedState.stock3 },
-            { key: 'stock4', name: 'Компания 4 (Космотех)', type: 'stock', desc: `Верхняя карта в Банке: №${sharedState.stock4}`, price: prices.stock4, val: sharedState.stock4 },
-            { key: 'btc', name: 'Bitcoin 🪙', type: 'crypto', desc: `Всего карт на общем столе: ${sharedState.btc}`, price: prices.btc, val: sharedState.btc },
-            { key: 'eth', name: 'Ethereum 💎', type: 'crypto', desc: `Всего карт на общем столе: ${sharedState.eth}`, price: prices.eth, val: sharedState.eth },
-            { key: 'shit', name: 'Щиткоин 💩', type: 'crypto', desc: `Всего карт на общем столе: ${sharedState.shit}`, price: prices.shit, val: sharedState.shit }
+            { key: 'stock1', name: 'Компания 1 (Сырьё)', type: 'stock', desc: `Верхняя карта в Банке: №${marketState.stock1}`, price: prices.stock1, val: marketState.stock1 },
+            { key: 'stock2', name: 'Компания 2 (IT-Сектор)', type: 'stock', desc: `Верхняя карта в Банке: №${marketState.stock2}`, price: prices.stock2, val: marketState.stock2 },
+            { key: 'stock3', name: 'Компания 3 (Нефть/Газ)', type: 'stock', desc: `Верхняя карта в Банке: №${marketState.stock3}`, price: prices.stock3, val: marketState.stock3 },
+            { key: 'stock4', name: 'Компания 4 (Космотех)', type: 'stock', desc: `Верхняя карта в Банке: №${marketState.stock4}`, price: prices.stock4, val: marketState.stock4 },
+            { key: 'btc', name: 'Bitcoin 🪙', type: 'crypto', desc: `Всего карт на общем столе: ${marketState.btc}`, price: prices.btc, val: marketState.btc },
+            { key: 'eth', name: 'Ethereum 💎', type: 'crypto', desc: `Всего карт на общем столе: ${marketState.eth}`, price: prices.eth, val: marketState.eth },
+            { key: 'shit', name: 'Щиткоин 💩', type: 'crypto', desc: `Всего карт на общем столе: ${marketState.shit}`, price: prices.shit, val: marketState.shit }
         ];
+
+        let p = players[activePlayerId];
 
         let marketHtml = '';
         marketData.forEach(item => {
-            const canBuy = myPortfolio.cash >= item.price;
-            const canSell = myPortfolio[item.key] > 0;
+            const canBuy = p.cash >= item.price;
+            const canSell = p[item.key] > 0;
             const isStock = item.type === 'stock';
 
             marketHtml += `
@@ -548,46 +423,37 @@
         });
         document.getElementById('market-render-root').innerHTML = marketHtml;
 
+        // Расчет капитала для текущего активного игрока
         let totalAssetsValue = 
-            (myPortfolio.stock1 * prices.stock1) + (myPortfolio.stock2 * prices.stock2) +
-            (myPortfolio.stock3 * prices.stock3) + (myPortfolio.stock4 * prices.stock4) +
-            (myPortfolio.btc * prices.btc) + (myPortfolio.eth * prices.eth) + (myPortfolio.shit * prices.shit);
+            (p.stock1 * prices.stock1) + (p.stock2 * prices.stock2) +
+            (p.stock3 * prices.stock3) + (p.stock4 * prices.stock4) +
+            (p.btc * prices.btc) + (p.eth * prices.eth) + (p.shit * prices.shit);
 
-        let finalCapital = myPortfolio.cash + totalAssetsValue;
+        let finalCapital = p.cash + totalAssetsValue;
 
-        document.getElementById('ui-cash').innerText = myPortfolio.cash.toLocaleString() + " $";
+        document.getElementById('ui-cash').innerText = p.cash.toLocaleString() + " $";
         const totalUi = document.getElementById('ui-total');
         if (finalCapital >= 40000) {
             totalUi.style.color = '#10b981';
-            totalUi.innerText = finalCapital.toLocaleString() + " $ 👑 ПОБЕДА!";
+            totalUi.innerText = finalCapital.toLocaleString() + " $ 👑 ПОБЕДА ИГРОКА!";
         } else {
             totalUi.style.color = '#fff';
             totalUi.innerText = finalCapital.toLocaleString() + " $";
         }
 
         const invData = [
-            { name: 'Комп. 1', count: myPortfolio.stock1 }, { name: 'Комп. 2', count: myPortfolio.stock2 },
-            { name: 'Комп. 3', count: myPortfolio.stock3 }, { name: 'Комп. 4', count: myPortfolio.stock4 },
-            { name: 'BTC', count: myPortfolio.btc }, { name: 'ETH', count: myPortfolio.eth }, { name: 'SHIT', count: myPortfolio.shit }
+            { name: 'Комп. 1', count: p.stock1 }, { name: 'Комп. 2', count: p.stock2 },
+            { name: 'Комп. 3', count: p.stock3 }, { name: 'Комп. 4', count: p.stock4 },
+            { name: 'BTC', count: p.btc }, { name: 'ETH', count: p.eth }, { name: 'SHIT', count: p.shit }
         ];
 
-        let invHtml = '';
-        invData.forEach(cell => {
-            invHtml += `<div class="inv-cell"><span class="inv-name">${cell.name}</span><span class="inv-count">${cell.count}</span></div>`;
-        });
-        document.getElementById('inventory-render-root').innerHTML = invHtml;
+        document.getElementById('inventory-render-root').innerHTML = invData.map(cell => `
+            <div class="inv-cell">
+                <span class="inv-name">${cell.name}</span>
+                <span class="inv-count">${cell.count}</span>
+            </div>
+        `).join('');
     }
-
-    function copySessionLink() {
-        const btn = document.getElementById('share-btn');
-        const el = document.createElement('textarea');
-        el.value = window.location.origin + window.location.pathname + "?room=" + roomId;
-        document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el);
-        btn.innerText = "Ссылка скопирована! 🚀";
-        setTimeout(() => { btn.innerText = "Скопировать инвайт-ссылку для друзей 🔗"; }, 3000);
-    }
-
-    updateGameEngine();
 </script>
 </body>
 </html>
